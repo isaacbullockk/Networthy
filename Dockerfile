@@ -2,9 +2,11 @@
 FROM node:20-alpine AS build
 WORKDIR /app
 
-# Install all dependencies (dev deps are needed for vite/esbuild/tsc)
+# Install all dependencies (dev deps are needed for vite/esbuild/tsc).
+# --include=dev is REQUIRED: Railway sets NODE_ENV=production at build time,
+# which makes plain `npm ci` skip devDependencies → "sh: vite: not found".
 COPY package.json package-lock.json ./
-RUN npm ci
+RUN npm ci --include=dev
 
 # Copy source and build frontend (dist/public) + server bundle (dist/boot.js)
 COPY . .

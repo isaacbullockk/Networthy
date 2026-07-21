@@ -42,27 +42,40 @@ are already there (migrations self-verify at boot).
 
 **Option B — fresh Railway MySQL:** add the **MySQL** plugin to the project and
 copy its `DATABASE_URL` into the app variables. The container creates all
-tables on first boot. Then seed the demo data once, from your machine:
+tables on first boot. Then seed the launch content once, from your machine:
 
 ```bash
-DATABASE_URL=<railway-mysql-url> npx tsx db/seed.ts
+DATABASE_URL=<railway-mysql-url> SEED_DATABASE=yes SEED_PASSWORD='<strong-password>' ADMIN_PASSWORD='<admin-password>' npx tsx db/seed.ts
 ```
 
-Seeds: 8 talents, 2 recruiters (lisa@picnic.nl · PicNic, mark@bol.com · Bol.com),
-1 independent assessor (jeroen@networthy.app) — all passwords `demo1234` —
-plus matches, questionnaires, meetings, exchanges, assessments, a hired match
-in retention mode and a retained alumna for the buddy pool.
+The seed script **wipes every table** and therefore refuses to run without
+`SEED_DATABASE=yes` — it can never hit production by accident. Passwords are
+bcrypt-hashed and come from env vars (default `NetWorthy!2026` if unset —
+change it on first login).
+
+Seeds: 8 talents, 2 approved recruiters (lisa@picnic.nl · PicNic, mark@bol.com ·
+Bol.com), 1 independent assessor (jeroen@networthy.app), 1 admin
+(isaac@networthy.app — approves recruiters, invites assessors) — plus matches,
+questionnaires, meetings, exchanges, assessments, a hired match in retention
+mode and a retained alumna for the buddy pool.
 
 ## 5. Deploy & verify
 
 - Railway deploys on every push to `main`.
 - Check `https://<your-app>.up.railway.app/api/health` → `{"ok":true,...}`.
-- Sign in with a demo account (e.g. `lisa@picnic.nl` / `demo1234`).
-- Roles to try: recruiter (dashboard, pipeline, records), talent (portal,
-  video intro, retention journey), assessor (verification directory).
+- Sign in as admin (`isaac@networthy.app`) and open `/admin` — the trust gate.
+- Roles to try: admin (approve recruiters, invite assessors), recruiter
+  (dashboard, pipeline, records), talent (portal, video intro, retention
+  journey), assessor (verification directory).
+- New signups: talents get instant access to their portal; recruiters land on
+  an "under review" screen until the admin approves them.
 
 ## Notes
 
+- **Build-time `NODE_ENV`:** Railway sets `NODE_ENV=production` during the
+  Docker build, which makes plain `npm ci` silently skip devDependencies and
+  fail with `sh: vite: not found` (exit 127). The Dockerfile therefore uses
+  `npm ci --include=dev` in the build stage — do not "simplify" it back.
 - **Video calls (WebRTC)** run over the same port and domain (`/ws`), so they
   work out of the box behind Railway's TLS — camera/mic require HTTPS, which
   Railway provides.
