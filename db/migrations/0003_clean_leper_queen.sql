@@ -1,0 +1,1 @@
+ALTER TABLE `matches` ADD `share_token` varchar(64);

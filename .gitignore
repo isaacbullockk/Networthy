@@ -30,7 +30,9 @@ dist-ssr
 *.db
 *.sqlite
 *.sqlite3
-db/migrations/*.sql
+# db/migrations/*.sql — MUST be tracked: the boot-time migration runner
+# (db/run-migrations.mjs) reads these files inside the Docker image.
+# Ignoring them once caused a production ENOENT crash on fresh databases.
 # TypeScript cache
 *.tsbuildinfo
 # Build outputs
