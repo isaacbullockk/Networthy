@@ -8,6 +8,9 @@ WORKDIR /app
 # .npmrc pins registry.npmjs.org — the lockfile's "resolved" URLs must be
 # reachable from Railway's builders.
 COPY package.json package-lock.json .npmrc ./
+# Self-heal: if any lockfile "resolved" URL points at an unreachable internal
+# mirror, rewrite it to the public registry before installing.
+RUN sed -i 's|https://npm\.mirrors\.msh\.team/|https://registry.npmjs.org/|g' package-lock.json
 RUN npm ci --include=dev --no-audit --no-fund --fetch-retries=5 || { \
       echo '=== npm ci failed — npm debug log follows ==='; \
       tail -n 100 /root/.npm/_logs/*debug-0.log 2>/dev/null; \
