@@ -1,30 +1,32 @@
 import { Link, NavLink, Outlet } from 'react-router'
 import { Sparkles, LogOut, Eye } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/lib/auth'
 import { footer } from '@/config/poolContent'
+import LanguageSwitcher from '@/components/LanguageSwitcher'
 
 const RECRUITER_NAV = [
-  { to: '/discover', label: 'Discover talent' },
-  { to: '/questionnaires', label: 'Questionnaires' },
-  { to: '/meetings', label: 'In-house visits' },
-  { to: '/exchange', label: 'Teach & Learn' },
-  { to: '/dashboard', label: 'Dashboard' },
+  { to: '/discover', key: 'discoverTalent' },
+  { to: '/questionnaires', key: 'questionnaires' },
+  { to: '/meetings', key: 'inHouseVisits' },
+  { to: '/exchange', key: 'teachLearn' },
+  { to: '/dashboard', key: 'dashboard' },
 ]
 
 const TALENT_NAV = [
-  { to: '/portal', label: 'My journey' },
-  { to: '/portal/questionnaires', label: 'Questionnaires' },
-  { to: '/portal/visits', label: 'My visits' },
-  { to: '/exchange', label: 'Teach & Learn' },
-  { to: '/portal/profile', label: 'My story' },
+  { to: '/portal', key: 'myJourney' },
+  { to: '/portal/questionnaires', key: 'questionnaires' },
+  { to: '/portal/visits', key: 'myVisits' },
+  { to: '/exchange', key: 'teachLearn' },
+  { to: '/portal/profile', key: 'myStory' },
 ]
 
 const ASSESSOR_NAV = [
-  { to: '/assessor', label: 'Verify talent' },
+  { to: '/assessor', key: 'verifyTalent' },
 ]
 
 const ADMIN_NAV = [
-  { to: '/admin', label: 'Trust gate' },
+  { to: '/admin', key: 'trustGate' },
 ]
 
 function homeFor(role?: string) {
@@ -36,6 +38,7 @@ function homeFor(role?: string) {
 
 export default function Layout() {
   const { user, logout } = useAuth()
+  const { t } = useTranslation()
   const nav = user?.role === 'talent' ? TALENT_NAV
     : user?.role === 'assessor' ? ASSESSOR_NAV
     : user?.role === 'admin' ? ADMIN_NAV
@@ -46,7 +49,7 @@ export default function Layout() {
       {user?.isGuest && (
         <div className="flex items-center justify-center gap-2 bg-amber-500/15 px-4 py-2 text-center text-xs font-semibold text-amber-700 dark:text-amber-400">
           <Eye className="h-3.5 w-3.5" />
-          Guest preview — you're viewing launch content read-only. Actions are disabled.
+          {t('guest.banner')}
         </div>
       )}
       <header className="sticky top-0 z-40 border-b border-border/70 bg-background/85 backdrop-blur-md">
@@ -71,11 +74,12 @@ export default function Layout() {
                   }`
                 }
               >
-                {n.label}
+                {t(`nav.${n.key}`)}
               </NavLink>
             ))}
           </nav>
           <div className="flex items-center gap-3">
+            <LanguageSwitcher />
             {user ? (
               <>
                 <div className="hidden text-right sm:block">

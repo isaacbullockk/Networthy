@@ -1,8 +1,10 @@
 import { useState } from 'react'
 import { ClipboardList, Send, CheckCircle2, Clock, Building2 } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { useApp } from '@/context/AppContext'
 
 export default function PortalQuestionnaires() {
+  const { t } = useTranslation()
   const { questionnaires, submitAnswers, matches } = useApp()
   const [drafts, setDrafts] = useState<Record<string, string>>({})
   const [justSent, setJustSent] = useState<number | null>(null)
@@ -28,7 +30,7 @@ export default function PortalQuestionnaires() {
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-10 sm:px-6 lg:py-14">
-      <div className="text-xs font-bold uppercase tracking-widest text-primary">Questionnaires</div>
+      <div className="text-xs font-bold uppercase tracking-widest text-primary">{t('portal.quest.title')}</div>
       <h1 className="mt-2 font-display text-4xl font-semibold tracking-tight sm:text-5xl">
         Your words, your pace.
       </h1>
@@ -86,7 +88,7 @@ export default function PortalQuestionnaires() {
                         rows={3}
                         value={drafts[`${q.id}:${qu.id}`] ?? ''}
                         onChange={(e) => setAnswer(`${q.id}:${qu.id}`, e.target.value)}
-                        placeholder="Take your time — write what feels true…"
+                        placeholder={t('portal.quest.answerPh')}
                         className="mt-2 w-full rounded-xl border border-input bg-background px-3.5 py-2.5 text-sm outline-none focus:border-primary"
                       />
                     ) : qu.type === 'choice' ? (
@@ -126,7 +128,7 @@ export default function PortalQuestionnaires() {
                             </button>
                           )
                         })}
-                        <span className="ml-2 text-xs text-muted-foreground">1 = low · 5 = high</span>
+                        <span className="ml-2 text-xs text-muted-foreground">{t('portal.quest.scaleHint')}</span>
                       </div>
                     )}
                   </div>
@@ -142,7 +144,7 @@ export default function PortalQuestionnaires() {
                       <Send className="h-4 w-4" /> Send my answers
                     </button>
                     {answeredCount < q.questions.length && (
-                      <span className="text-sm text-muted-foreground">Answer all questions to send</span>
+                      <span className="text-sm text-muted-foreground">{t('portal.quest.sendHint')}</span>
                     )}
                     {justSent === q.id && (
                       <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-emerald-600">

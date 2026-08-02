@@ -4,15 +4,16 @@ import {
   CalendarDays, ArrowRight, PartyPopper, GraduationCap, ArrowRightLeft,
   ShieldCheck, BadgeCheck, Clock, Check, X, HeartHandshake, Flame,
 } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { trpc } from '@/providers/trpc'
 import { useApp } from '@/context/AppContext'
 import { useAuth } from '@/lib/auth'
 import { STAGES, stageIndex } from '@/types'
-import { trust } from '@/config/poolContent'
 import Avatar from '@/components/Avatar'
 import StageBadge from '@/components/StageBadge'
 
 export default function PortalHome() {
+  const { t } = useTranslation()
   const { user } = useAuth()
   const { matches, questionnaires, meetings } = useApp()
   const { data: profile } = trpc.talents.mine.useQuery()
@@ -36,15 +37,15 @@ export default function PortalHome() {
       <div className="flex flex-wrap items-center gap-5">
         {profile && <Avatar name={profile.name} gradient={profile.gradient} size="lg" />}
         <div>
-          <div className="text-xs font-bold uppercase tracking-widest text-primary">My NetWorthy journey</div>
+          <div className="text-xs font-bold uppercase tracking-widest text-primary">{t('portal.home.eyebrow')}</div>
           <h1 className="mt-1 font-display text-4xl font-semibold tracking-tight sm:text-5xl">
-            Welcome back, {firstName}.
+            {t('portal.home.welcome', { name: firstName })}
           </h1>
           <p className="mt-2 max-w-xl text-lg text-muted-foreground">
-            Your talent is in demand. Here's where you stand with every company.
+            {t('portal.home.subtitle')}
           </p>
           <p className="mt-2 inline-flex items-center gap-1.5 text-sm font-medium text-emerald-700">
-            <ShieldCheck className="h-4 w-4" /> {trust.promises[1].text}
+            <ShieldCheck className="h-4 w-4" /> {t('portal.home.trustPromise')}
           </p>
         </div>
       </div>
@@ -60,9 +61,9 @@ export default function PortalHome() {
             <ShieldCheck className="h-6 w-6" />
           </div>
           <div className="min-w-0 flex-1">
-            <div className="font-display text-lg font-semibold">Your NetWorthy Record with {m.company} is ready</div>
+            <div className="font-display text-lg font-semibold">{t('portal.home.recordReady', { company: m.company })}</div>
             <div className="text-sm text-muted-foreground">
-              Earned through connection — verified skills, your story, the process that proved it. Yours to keep and share.
+              {t('portal.home.recordSub')}
             </div>
           </div>
           <ChevronRight className="h-5 w-5 shrink-0 text-muted-foreground" />
@@ -87,12 +88,12 @@ export default function PortalHome() {
               </div>
               <div className="min-w-0 flex-1">
                 <div className="font-display text-lg font-semibold">
-                  {m.stage === 'retained' ? `Retained at ${m.company} — you made it.` : `Your first 90 days at ${m.company} · Day ${day} of 90`}
+                  {m.stage === 'retained' ? t('portal.home.retainedAt', { company: m.company }) : t('portal.home.first90', { company: m.company, day })}
                 </div>
                 <div className="text-sm text-muted-foreground">
                   {pend
-                    ? [pend.duePoint ? `Day ${pend.duePoint} pulse check-in is due` : '', pend.contractWaiting ? 'Your connection contract is waiting' : ''].filter(Boolean).join(' · ')
-                    : 'Connection health looks good — keep going.'}
+                    ? [pend.duePoint ? t('portal.home.pulseDue', { day: pend.duePoint }) : '', pend.contractWaiting ? t('portal.home.contractWaiting') : ''].filter(Boolean).join(' · ')
+                    : t('portal.home.healthGood')}
                 </div>
                 {m.stage === 'hired' && (
                   <div className="mt-2.5 h-2 max-w-md overflow-hidden rounded-full bg-muted">
@@ -102,7 +103,7 @@ export default function PortalHome() {
               </div>
               {pend?.duePoint != null && (
                 <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-500 px-4 py-2 text-sm font-bold text-white">
-                  <Flame className="h-4 w-4" /> Check in now
+                  <Flame className="h-4 w-4" /> {t('portal.home.checkInNow')}
                 </span>
               )}
               {!pend && <ChevronRight className="h-5 w-5 text-muted-foreground" />}
@@ -123,10 +124,10 @@ export default function PortalHome() {
               <span className="rounded-full bg-primary px-2.5 py-0.5 text-xs font-bold text-primary-foreground">{stats.level}</span>
             </div>
             <div className="mt-1 text-sm text-secondary-foreground/70">
-              {stats.xp} XP · {stats.completedCount} exchanges completed · {stats.badges.filter((b) => b.earned).length} badges
+              {t('portal.home.xpLine', { xp: stats.xp, count: stats.completedCount, badges: stats.badges.filter((b) => b.earned).length })}
               {(exchanges ?? []).some((e) => e.status === 'proposed' && e.proposedBy !== 'talent') && (
                 <span className="ml-2 inline-flex items-center gap-1 font-semibold text-primary">
-                  <ArrowRightLeft className="h-3.5 w-3.5" /> a recruiter proposed an exchange!
+                  <ArrowRightLeft className="h-3.5 w-3.5" /> {t('portal.home.exchangeProposed')}
                 </span>
               )}
             </div>
@@ -149,17 +150,17 @@ export default function PortalHome() {
               <ClipboardList className="h-5.5 w-5.5" />
             </div>
             {pendingQuests.length > 0 && (
-              <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-bold text-amber-800">{pendingQuests.length} to answer</span>
+              <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-bold text-amber-800">{t('portal.home.questToAnswer', { count: pendingQuests.length })}</span>
             )}
           </div>
-          <h3 className="mt-4 font-display text-xl font-semibold">Questionnaires</h3>
+          <h3 className="mt-4 font-display text-xl font-semibold">{t('portal.home.questTitle')}</h3>
           <p className="mt-1.5 text-sm text-muted-foreground">
             {pendingQuests.length > 0
-              ? 'A recruiter is curious about you — answer in your own words, in your own time.'
-              : 'No pending questions right now.'}
+              ? t('portal.home.questPending')
+              : t('portal.home.questNone')}
           </p>
           <span className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-primary group-hover:gap-2 transition-all">
-            Open <ChevronRight className="h-4 w-4" />
+            {t('common.open')} <ChevronRight className="h-4 w-4" />
           </span>
         </Link>
 
@@ -169,17 +170,17 @@ export default function PortalHome() {
               <Building2 className="h-5.5 w-5.5" />
             </div>
             {upcomingVisits.length > 0 && (
-              <span className="rounded-full bg-orange-100 px-3 py-1 text-xs font-bold text-orange-800">{upcomingVisits.length} planned</span>
+              <span className="rounded-full bg-orange-100 px-3 py-1 text-xs font-bold text-orange-800">{t('portal.home.visitsPlanned', { count: upcomingVisits.length })}</span>
             )}
           </div>
-          <h3 className="mt-4 font-display text-xl font-semibold">In-house visits</h3>
+          <h3 className="mt-4 font-display text-xl font-semibold">{t('portal.home.visitsTitle')}</h3>
           <p className="mt-1.5 text-sm text-muted-foreground">
             {upcomingVisits.length > 0
-              ? `Next visit: ${upcomingVisits[0].date} at ${upcomingVisits[0].time} — come as you are.`
-              : 'No visits planned yet — they follow a good video chat.'}
+              ? t('portal.home.visitsNext', { date: upcomingVisits[0].date, time: upcomingVisits[0].time })
+              : t('portal.home.visitsNone')}
           </p>
           <span className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-primary group-hover:gap-2 transition-all">
-            Open <ChevronRight className="h-4 w-4" />
+            {t('common.open')} <ChevronRight className="h-4 w-4" />
           </span>
         </Link>
 
@@ -187,12 +188,12 @@ export default function PortalHome() {
           <div className="grid h-11 w-11 place-items-center rounded-2xl bg-teal-100 text-teal-700">
             <Sparkles className="h-5.5 w-5.5" />
           </div>
-          <h3 className="mt-4 font-display text-xl font-semibold">My story</h3>
+          <h3 className="mt-4 font-display text-xl font-semibold">{t('portal.home.storyTitle')}</h3>
           <p className="mt-1.5 text-sm text-muted-foreground">
-            Your profile is your voice — keep it fresh so recruiters meet the real you.
+            {t('portal.home.storySub')}
           </p>
           <span className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-primary group-hover:gap-2 transition-all">
-            Edit my story <ChevronRight className="h-4 w-4" />
+            {t('portal.home.storyEdit')} <ChevronRight className="h-4 w-4" />
           </span>
         </Link>
       </div>
@@ -202,18 +203,18 @@ export default function PortalHome() {
         <div className="mt-10">
           <div className="flex items-center gap-3">
             <ShieldCheck className="h-5 w-5 text-primary" />
-            <h2 className="font-display text-2xl font-semibold">Your verification</h2>
+            <h2 className="font-display text-2xl font-semibold">{t('portal.home.verification')}</h2>
           </div>
-          <p className="mt-1 text-sm text-muted-foreground">{trust.whyIndependent}</p>
+          <p className="mt-1 text-sm text-muted-foreground">{t('portal.home.whyIndependent')}</p>
 
           <div className="mt-5 space-y-4">
             {pendingAssessments.map(({ assessment: a, assessorName }) => (
               <div key={a.id} className="rounded-3xl border border-amber-200 bg-amber-50/60 p-5 shadow-sm sm:p-6">
                 <div className="flex flex-wrap items-center gap-2.5">
                   <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-100 px-3 py-1 text-xs font-bold text-amber-800">
-                    <Clock className="h-3.5 w-3.5" /> Waiting for your approval
+                    <Clock className="h-3.5 w-3.5" /> {t('portal.home.waitingApproval')}
                   </span>
-                  <span className="text-sm text-muted-foreground">by {assessorName}, independent assessor</span>
+                  <span className="text-sm text-muted-foreground">{t('portal.home.byAssessor', { name: assessorName })}</span>
                 </div>
                 <div className="mt-4 flex flex-wrap gap-2">
                   {a.skillsVerified.map((s) => (
@@ -223,11 +224,11 @@ export default function PortalHome() {
                   ))}
                 </div>
                 <div className="mt-4 rounded-2xl bg-card p-4">
-                  <div className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Standout strengths</div>
+                  <div className="text-xs font-bold uppercase tracking-widest text-muted-foreground">{t('portal.home.standoutStrengths')}</div>
                   <p className="mt-1 text-sm leading-relaxed">{a.strengths}</p>
                 </div>
                 <div className="mt-3 rounded-2xl bg-card p-4">
-                  <div className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Assessment</div>
+                  <div className="text-xs font-bold uppercase tracking-widest text-muted-foreground">{t('portal.home.assessment')}</div>
                   <p className="mt-1 text-sm leading-relaxed">{a.summary}</p>
                 </div>
                 <div className="mt-4 flex flex-wrap gap-3">
@@ -236,14 +237,14 @@ export default function PortalHome() {
                     disabled={approveMut.isPending}
                     className="inline-flex items-center gap-2 rounded-full bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:brightness-110 disabled:opacity-50"
                   >
-                    <Check className="h-4 w-4" /> Approve — publish to my profile
+                    <Check className="h-4 w-4" /> {t('portal.home.approvePublish')}
                   </button>
                   <button
                     onClick={() => declineMut.mutate({ assessmentId: a.id })}
                     disabled={declineMut.isPending}
                     className="inline-flex items-center gap-2 rounded-full border border-border px-5 py-2.5 text-sm font-semibold text-muted-foreground transition hover:text-foreground"
                   >
-                    <X className="h-4 w-4" /> Decline
+                    <X className="h-4 w-4" /> {t('portal.home.decline')}
                   </button>
                 </div>
               </div>
@@ -253,8 +254,8 @@ export default function PortalHome() {
               <div key={a.id} className="flex items-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
                 <BadgeCheck className="h-5 w-5 shrink-0 text-emerald-600" />
                 <div className="text-sm">
-                  <span className="font-semibold text-emerald-800">Verified by {assessorName}</span>
-                  <span className="text-emerald-700"> — visible on your profile: {a.skillsVerified.join(', ')}</span>
+                  <span className="font-semibold text-emerald-800">{t('portal.home.verifiedBy', { name: assessorName })}</span>
+                  <span className="text-emerald-700">{t('portal.home.verifiedVisible', { skills: a.skillsVerified.join(', ') })}</span>
                 </div>
               </div>
             ))}
@@ -264,11 +265,11 @@ export default function PortalHome() {
 
       {/* Matches / journey */}
       <div className="mt-12">
-        <h2 className="font-display text-2xl font-semibold">Companies connecting with you</h2>
+        <h2 className="font-display text-2xl font-semibold">{t('portal.home.companies')}</h2>
         <div className="mt-5 space-y-4">
           {matches.length === 0 && (
             <div className="rounded-3xl border border-dashed border-border p-14 text-center text-muted-foreground">
-              Recruiters are discovering your story — your first match will appear here.
+              {t('portal.home.noMatches')}
             </div>
           )}
           {matches.map((m) => (
@@ -283,7 +284,7 @@ export default function PortalHome() {
                     <StageBadge stage={m.stage} />
                     {m.connectionRating > 0 && (
                       <span className="inline-flex items-center gap-1 text-sm font-semibold text-amber-500">
-                        <Star className="h-4 w-4 fill-current" /> {m.connectionRating}/5 connection
+                        <Star className="h-4 w-4 fill-current" /> {t('portal.home.connection', { rating: m.connectionRating })}
                       </span>
                     )}
                   </div>
@@ -293,7 +294,7 @@ export default function PortalHome() {
                   to={`/call/${m.talentId}`}
                   className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground transition hover:brightness-110"
                 >
-                  <Video className="h-4 w-4" /> Join video chat <ArrowRight className="h-4 w-4" />
+                  <Video className="h-4 w-4" /> {t('portal.home.joinVideo')} <ArrowRight className="h-4 w-4" />
                 </Link>
               </div>
               {/* stage progress */}
@@ -309,12 +310,12 @@ export default function PortalHome() {
               </div>
               {m.stage === 'hired' && (
                 <div className="mt-4 flex items-center gap-2 rounded-xl bg-emerald-50 p-3.5 text-sm font-semibold text-emerald-700">
-                  <PartyPopper className="h-4.5 w-4.5" /> Congratulations — you got the job!
+                  <PartyPopper className="h-4.5 w-4.5" /> {t('portal.home.hired')}
                 </div>
               )}
               {m.stage === 'retained' && (
                 <div className="mt-4 flex items-center gap-2 rounded-xl bg-teal-50 p-3.5 text-sm font-semibold text-teal-700">
-                  <PartyPopper className="h-4.5 w-4.5" /> 90+ days in — you're truly part of the team now.
+                  <PartyPopper className="h-4.5 w-4.5" /> {t('portal.home.retained90')}
                 </div>
               )}
             </div>
@@ -325,7 +326,7 @@ export default function PortalHome() {
       {/* Upcoming visits summary */}
       {upcomingVisits.length > 0 && (
         <div className="mt-12">
-          <h2 className="font-display text-2xl font-semibold">Coming up</h2>
+          <h2 className="font-display text-2xl font-semibold">{t('portal.home.comingUp')}</h2>
           <div className="mt-4 grid gap-4 md:grid-cols-2">
             {upcomingVisits.map((v) => (
               <div key={v.id} className="flex items-center gap-4 rounded-3xl border border-border bg-card p-5 shadow-sm">

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { Sparkles, ArrowRight, AlertCircle, GraduationCap, Building2, ShieldCheck } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/lib/auth'
 import { brand } from '@/config/poolContent'
 
@@ -12,6 +13,7 @@ function homeFor(role: string) {
 
 export default function Signup() {
   const { register, user } = useAuth()
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const [role, setRole] = useState<Role>('talent')
   const [name, setName] = useState('')
@@ -30,7 +32,7 @@ export default function Signup() {
     e.preventDefault()
     setError('')
     if (password !== confirm) {
-      setError('Passwords don’t match.')
+      setError(t('auth.signup.noMatch'))
       return
     }
     setBusy(true)
@@ -44,7 +46,7 @@ export default function Signup() {
       })
       navigate(homeFor(u.role))
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not create the account. Try again.')
+      setError(err instanceof Error ? err.message : t('auth.signup.failed'))
       setBusy(false)
     }
   }
@@ -64,7 +66,7 @@ export default function Signup() {
             <Sparkles className="h-7 w-7" />
           </div>
           <h1 className="mt-4 font-display text-4xl font-semibold">
-            Join Net<span className="text-primary">Worthy</span>
+            {t('auth.signup.titleA')}<span className="text-primary">{t('auth.signup.titleB')}</span>
           </h1>
           <p className="mt-2 text-secondary-foreground/70">{brand.tagline}</p>
         </div>
@@ -82,8 +84,8 @@ export default function Signup() {
             >
               <GraduationCap className="h-5 w-5 shrink-0 text-primary" />
               <span>
-                <span className="block text-sm font-semibold">I’m talent</span>
-                <span className="block text-xs text-secondary-foreground/50">Show who I am</span>
+                <span className="block text-sm font-semibold">{t('auth.signup.imTalent')}</span>
+                <span className="block text-xs text-secondary-foreground/50">{t('auth.signup.talentSub')}</span>
               </span>
             </button>
             <button
@@ -97,34 +99,34 @@ export default function Signup() {
             >
               <Building2 className="h-5 w-5 shrink-0 text-primary" />
               <span>
-                <span className="block text-sm font-semibold">I hire</span>
-                <span className="block text-xs text-secondary-foreground/50">Meet the pool</span>
+                <span className="block text-sm font-semibold">{t('auth.signup.iHire')}</span>
+                <span className="block text-xs text-secondary-foreground/50">{t('auth.signup.hireSub')}</span>
               </span>
             </button>
           </div>
 
           <div className="mt-5 space-y-4">
             <div>
-              <label className="text-sm font-semibold">Full name</label>
-              <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Your name" autoComplete="name" className={inputCls} />
+              <label className="text-sm font-semibold">{t('auth.signup.fullName')}</label>
+              <input value={name} onChange={(e) => setName(e.target.value)} placeholder={t('auth.signup.namePh')} autoComplete="name" className={inputCls} />
             </div>
             <div>
-              <label className="text-sm font-semibold">Email</label>
-              <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" autoComplete="email" className={inputCls} />
+              <label className="text-sm font-semibold">{t('auth.email')}</label>
+              <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder={t('auth.signup.emailPh')} autoComplete="email" className={inputCls} />
             </div>
             {role === 'recruiter' && (
               <div>
-                <label className="text-sm font-semibold">Company</label>
-                <input value={company} onChange={(e) => setCompany(e.target.value)} placeholder="Where do you hire?" autoComplete="organization" className={inputCls} />
+                <label className="text-sm font-semibold">{t('auth.signup.company')}</label>
+                <input value={company} onChange={(e) => setCompany(e.target.value)} placeholder={t('auth.signup.companyPh')} autoComplete="organization" className={inputCls} />
               </div>
             )}
             <div>
-              <label className="text-sm font-semibold">Password</label>
-              <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="At least 10 characters, letters + numbers" autoComplete="new-password" className={inputCls} />
+              <label className="text-sm font-semibold">{t('auth.password')}</label>
+              <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder={t('auth.signup.passwordPh')} autoComplete="new-password" className={inputCls} />
             </div>
             <div>
-              <label className="text-sm font-semibold">Repeat password</label>
-              <input type="password" value={confirm} onChange={(e) => setConfirm(e.target.value)} placeholder="Once more" autoComplete="new-password" className={inputCls} />
+              <label className="text-sm font-semibold">{t('auth.signup.repeat')}</label>
+              <input type="password" value={confirm} onChange={(e) => setConfirm(e.target.value)} placeholder={t('auth.signup.repeatPh')} autoComplete="new-password" className={inputCls} />
             </div>
           </div>
 
@@ -132,8 +134,7 @@ export default function Signup() {
             <p className="mt-4 flex items-start gap-2 rounded-xl bg-white/5 p-3 text-xs leading-relaxed text-secondary-foreground/60">
               <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
               <span>
-                Recruiter accounts are reviewed before they can meet the pool — the talents’ trust is
-                the product. This usually takes less than a day.
+                {t('auth.signup.reviewNote')}
               </span>
             </p>
           )}
@@ -149,12 +150,12 @@ export default function Signup() {
             disabled={busy || !name.trim() || !email || !password || !confirm}
             className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-6 py-3.5 font-semibold text-primary-foreground shadow-lg shadow-primary/25 transition hover:brightness-110 disabled:opacity-50"
           >
-            {busy ? 'Creating account…' : 'Create account'} <ArrowRight className="h-4.5 w-4.5" />
+            {busy ? t('auth.signup.creating') : t('auth.signup.submit')} <ArrowRight className="h-4.5 w-4.5" />
           </button>
           <p className="mt-5 text-center text-sm text-secondary-foreground/60">
-            Already have an account?{' '}
+            {t('auth.signup.haveAccount')}{' '}
             <Link to="/login" className="font-semibold text-primary hover:underline">
-              Sign in
+              {t('auth.signIn')}
             </Link>
           </p>
         </form>

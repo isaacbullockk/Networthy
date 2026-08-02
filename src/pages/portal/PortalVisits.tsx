@@ -1,13 +1,15 @@
 import { CalendarDays, Clock, MapPin, Users, FileText, PartyPopper, CheckCircle2 } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { useApp } from '@/context/AppContext'
 
 export default function PortalVisits() {
+  const { t } = useTranslation()
   const { meetings } = useApp()
   const sorted = [...meetings].sort((a, b) => (a.status === b.status ? a.date.localeCompare(b.date) : a.status === 'upcoming' ? -1 : 1))
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-10 sm:px-6 lg:py-14">
-      <div className="text-xs font-bold uppercase tracking-widest text-primary">In-house visits</div>
+      <div className="text-xs font-bold uppercase tracking-widest text-primary">{t('portal.visits.title')}</div>
       <h1 className="mt-2 font-display text-4xl font-semibold tracking-tight sm:text-5xl">
         Come as you are.
       </h1>

@@ -159,6 +159,14 @@ export const authRouter = createRouter({
     ctx.user ? { ...publicUser(ctx.user), isGuest: ctx.isGuest } : null
   ),
 
+  setLocale: authedQuery
+    .input(z.object({ locale: z.enum(["en", "nl", "ar"]) }))
+    .mutation(async ({ ctx, input }) => {
+      const db = getDb();
+      await db.update(users).set({ locale: input.locale }).where(eq(users.id, ctx.user.id));
+      return { ok: true };
+    }),
+
   logout: authedQuery.mutation(async ({ ctx }) => {
     const db = getDb();
     await db.delete(sessions).where(eq(sessions.userId, ctx.user.id));

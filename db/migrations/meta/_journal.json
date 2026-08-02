@@ -43,6 +43,13 @@
       "when": 1785675608970,
       "tag": "0005_brave_gravity",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "5",
+      "when": 1785677148323,
+      "tag": "0006_cold_millenium_guard",
+      "breakpoints": true
     }
   ]
 }

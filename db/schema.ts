@@ -37,6 +37,8 @@ export const users = mysqlTable(
     charterSignedAt: timestamp("charter_signed_at"),
     /** Recruiters can browse the pool only after an admin approves them */
     approvedAt: timestamp("approved_at"),
+    /** Preferred UI language (en / nl / ar) — pulses & emails follow this */
+    locale: varchar("locale", { length: 8 }).notNull().default("en"),
     createdAt: timestamp("created_at").defaultNow().notNull(),
   },
   (t) => ({ emailIdx: index("email_idx").on(t.email) })

@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { Sparkles, ArrowRight, AlertCircle, ShieldCheck, Eye } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/lib/auth'
-import { brand, trust } from '@/config/poolContent'
+import { brand } from '@/config/poolContent'
+import LanguageSwitcher from '@/components/LanguageSwitcher'
 
 function homeFor(role: string) {
   return role === 'talent' ? '/portal'
@@ -13,6 +15,7 @@ function homeFor(role: string) {
 
 export default function Login() {
   const { login, guestLogin, user } = useAuth()
+  const { t, i18n } = useTranslation()
   const navigate = useNavigate()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -30,11 +33,12 @@ export default function Login() {
     setError('')
     try {
       const u = await login(email, password)
+      if (u.locale) i18n.changeLanguage(u.locale)
       navigate(homeFor(u.role))
     } catch (err) {
       setError(err instanceof Error && err.message.includes('Too many')
         ? err.message
-        : 'That email and password don’t match.')
+        : t('auth.invalid'))
       setBusy(false)
     }
   }
@@ -45,6 +49,9 @@ export default function Login() {
       <div className="absolute -left-32 -top-32 h-96 w-96 rounded-full bg-primary/20 blur-3xl" />
       <div className="absolute -bottom-32 -right-32 h-96 w-96 rounded-full bg-accent/20 blur-3xl" />
 
+      <div className="absolute end-4 top-4">
+        <LanguageSwitcher dark />
+      </div>
       <div className="relative w-full max-w-md">
         <div className="text-center">
           <div className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-primary text-primary-foreground shadow-lg shadow-primary/30">
@@ -59,18 +66,18 @@ export default function Login() {
         <form onSubmit={submit} className="mt-8 rounded-3xl border border-white/10 bg-white/5 p-6 shadow-2xl backdrop-blur sm:p-8">
           <div className="space-y-4">
             <div>
-              <label className="text-sm font-semibold">Email</label>
+              <label className="text-sm font-semibold">{t('auth.email')}</label>
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@company.nl"
+                placeholder={t('auth.emailPh')}
                 autoComplete="email"
                 className="mt-1.5 w-full rounded-xl border border-white/15 bg-black/20 px-4 py-3 text-sm outline-none placeholder:text-white/30 focus:border-primary"
               />
             </div>
             <div>
-              <label className="text-sm font-semibold">Password</label>
+              <label className="text-sm font-semibold">{t('auth.password')}</label>
               <input
                 type="password"
                 value={password}
@@ -91,10 +98,10 @@ export default function Login() {
             disabled={busy}
             className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-6 py-3.5 font-semibold text-primary-foreground shadow-lg shadow-primary/25 transition hover:brightness-110 disabled:opacity-50"
           >
-            {busy ? 'Signing in…' : 'Sign in'} <ArrowRight className="h-4.5 w-4.5" />
+            {busy ? t('auth.signingIn') : t('auth.signIn')} <ArrowRight className="h-4.5 w-4.5" />
           </button>
           <div className="mt-4 flex items-center gap-3 text-xs text-secondary-foreground/40">
-            <span className="h-px flex-1 bg-white/10" /> or <span className="h-px flex-1 bg-white/10" />
+            <span className="h-px flex-1 bg-white/10" /> {t('auth.or')} <span className="h-px flex-1 bg-white/10" />
           </div>
           <button
             type="button"
@@ -106,25 +113,25 @@ export default function Login() {
                 await guestLogin()
                 navigate('/dashboard')
               } catch {
-                setError('Guest preview is unavailable right now.')
+                setError(t('auth.guestFailed'))
                 setBusy(false)
               }
             }}
             className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/5 px-6 py-3 font-semibold text-secondary-foreground transition hover:border-primary/50 hover:bg-white/10 disabled:opacity-50"
           >
-            <Eye className="h-4.5 w-4.5 text-primary" /> Explore as guest — read-only preview
+            <Eye className="h-4.5 w-4.5 text-primary" /> {t('auth.guestExplore')}
           </button>
           <p className="mt-5 text-center text-sm text-secondary-foreground/60">
-            New to NetWorthy?{' '}
+            {t('auth.newHere')}{' '}
             <Link to="/signup" className="font-semibold text-primary hover:underline">
-              Create an account
+              {t('auth.createAccount')}
             </Link>
           </p>
         </form>
 
         <p className="mt-6 flex items-start gap-2 rounded-2xl border border-white/10 bg-white/5 p-4 text-left text-xs leading-relaxed text-secondary-foreground/60 backdrop-blur">
           <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-          <span><strong className="text-secondary-foreground">For talents:</strong> {trust.promises[0].title.toLowerCase().replace(/^\w/, (c) => c.toUpperCase())} — {trust.promises[1].text}</span>
+          <span>{t('auth.trustLine')}</span>
         </p>
       </div>
     </div>

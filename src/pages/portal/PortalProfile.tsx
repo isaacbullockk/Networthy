@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react'
 import { Quote, Sparkles, CheckCircle2, Save, MapPin, Languages, Pencil, X } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { trpc } from '@/providers/trpc'
 import Avatar from '@/components/Avatar'
 import VideoIntroRecorder from '@/components/VideoIntroRecorder'
 
 export default function PortalProfile() {
+  const { t } = useTranslation()
   const utils = trpc.useUtils()
   const { data: profile, isLoading } = trpc.talents.mine.useQuery()
   const updateMut = trpc.talents.updateProfile.useMutation({
@@ -33,7 +35,7 @@ export default function PortalProfile() {
   }, [profile])
 
   if (isLoading || !profile) {
-    return <div className="mx-auto max-w-3xl px-4 py-24 text-center text-muted-foreground">Loading your story…</div>
+    return <div className="mx-auto max-w-3xl px-4 py-24 text-center text-muted-foreground">{t('portal.profile.loading')}</div>
   }
 
   const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
@@ -43,7 +45,7 @@ export default function PortalProfile() {
     <div className="mx-auto max-w-4xl px-4 py-10 sm:px-6 lg:py-14">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <div className="text-xs font-bold uppercase tracking-widest text-primary">My story</div>
+          <div className="text-xs font-bold uppercase tracking-widest text-primary">{t('portal.profile.title')}</div>
           <h1 className="mt-2 font-display text-4xl font-semibold tracking-tight sm:text-5xl">
             Your profile is your voice.
           </h1>
@@ -99,7 +101,7 @@ export default function PortalProfile() {
       <div className="mt-6 rounded-3xl border border-border bg-card p-6 shadow-sm sm:p-8">
         <div className="flex items-center gap-3">
           <Quote className="h-5 w-5 text-primary" />
-          <h3 className="font-display text-xl font-semibold">My tagline</h3>
+          <h3 className="font-display text-xl font-semibold">{t('portal.profile.tagline')}</h3>
         </div>
         {editing ? (
           <textarea rows={2} value={form.tagline} onChange={set('tagline')}
@@ -113,7 +115,7 @@ export default function PortalProfile() {
       <div className="mt-6 rounded-3xl border border-border bg-card p-6 shadow-sm sm:p-8">
         <div className="flex items-center gap-3">
           <Sparkles className="h-5 w-5 text-primary" />
-          <h3 className="font-display text-xl font-semibold">My story</h3>
+          <h3 className="font-display text-xl font-semibold">{t('portal.profile.title')}</h3>
         </div>
         {editing ? (
           <textarea rows={7} value={form.story} onChange={set('story')}
@@ -126,7 +128,7 @@ export default function PortalProfile() {
       {/* Looking for + availability */}
       <div className="mt-6 grid gap-6 sm:grid-cols-2">
         <div className="rounded-3xl border border-border bg-card p-6 shadow-sm">
-          <h3 className="font-display text-lg font-semibold">What I'm looking for</h3>
+          <h3 className="font-display text-lg font-semibold">{t('portal.profile.lookingFor')}</h3>
           {editing ? (
             <textarea rows={3} value={form.lookingFor} onChange={set('lookingFor')}
               className="mt-3 w-full rounded-xl border border-input bg-background px-3.5 py-2.5 text-sm outline-none focus:border-primary" />
@@ -135,7 +137,7 @@ export default function PortalProfile() {
           )}
         </div>
         <div className="rounded-3xl border border-border bg-card p-6 shadow-sm">
-          <h3 className="font-display text-lg font-semibold">Availability</h3>
+          <h3 className="font-display text-lg font-semibold">{t('portal.profile.availability')}</h3>
           {editing ? (
             <input value={form.availability} onChange={set('availability')}
               className="mt-3 w-full rounded-xl border border-input bg-background px-3.5 py-2.5 text-sm outline-none focus:border-primary" />
@@ -147,7 +149,7 @@ export default function PortalProfile() {
 
       {/* Traits & skills (read-only, coach-assessed) */}
       <div className="mt-6 rounded-3xl border border-border bg-card p-6 shadow-sm sm:p-8">
-        <h3 className="font-display text-lg font-semibold">Traits &amp; skills</h3>
+        <h3 className="font-display text-lg font-semibold">{t('portal.profile.traitsSkills')}</h3>
         <p className="mt-1 text-sm text-muted-foreground">Assessed with your NetWorthy coach — update them together at your next session.</p>
         <div className="mt-4 flex flex-wrap gap-2">
           {profile.traits.map((t) => (
@@ -168,9 +170,9 @@ export default function PortalProfile() {
             disabled={updateMut.isPending}
             className="inline-flex items-center gap-2 rounded-full bg-primary px-6 py-3 font-semibold text-primary-foreground transition hover:brightness-110 disabled:opacity-50"
           >
-            <Save className="h-4.5 w-4.5" /> {updateMut.isPending ? 'Saving…' : 'Save my story'}
+            <Save className="h-4.5 w-4.5" /> {updateMut.isPending ? t('portal.profile.saving') : t('portal.profile.save')}
           </button>
-          <span className="text-sm text-muted-foreground">Recruiters see changes immediately.</span>
+          <span className="text-sm text-muted-foreground">{t('portal.profile.immediateNote')}</span>
         </div>
       )}
       {saved && !editing && (

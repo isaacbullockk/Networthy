@@ -4,23 +4,16 @@ import {
   HeartHandshake, FileSignature, CheckCircle2, Clock, Send, Users,
   ShieldCheck, AlertTriangle, Flame, Coffee, ChevronRight, Sparkles,
 } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { trpc } from '@/providers/trpc'
 import { useAuth } from '@/lib/auth'
 import Avatar from '@/components/Avatar'
 
 const POINTS = [7, 30, 60, 90] as const
 
-const QUESTIONS = {
-  talent: [
-    { key: 'expectations', q: 'I know exactly what is expected of me' },
-    { key: 'belonging', q: 'I feel I belong here' },
-    { key: 'momentum', q: 'I want to come back on Monday' },
-  ],
-  recruiter: [
-    { key: 'expectations', q: 'Expectations are being met' },
-    { key: 'belonging', q: 'They are connecting with the team' },
-    { key: 'momentum', q: 'I would make this hire again' },
-  ],
+const QUESTION_KEYS = {
+  talent: ['expectations', 'belonging', 'momentum'],
+  recruiter: ['expectations', 'belonging', 'momentum'],
 } as const
 
 type Pulse = {
@@ -64,6 +57,7 @@ function Scale({ value, onChange }: { value: number; onChange: (v: number) => vo
 }
 
 export default function Retention() {
+  const { t } = useTranslation()
   const { matchId } = useParams()
   const id = Number(matchId)
   const { user } = useAuth()
@@ -92,7 +86,7 @@ export default function Retention() {
   }, [data])
 
   if (isLoading || !data) {
-    return <div className="mx-auto max-w-5xl px-4 py-16 text-muted-foreground">Loading the journey…</div>
+    return <div className="mx-auto max-w-5xl px-4 py-16 text-muted-foreground">{t('retention.loading')}</div>
   }
 
   const { match, talent, contract, pulses, buddy, side, day, duePoint } = data
@@ -101,13 +95,13 @@ export default function Retention() {
   const dayClamped = Math.min(day ?? 0, 90)
   const isRecruiter = side === 'recruiter'
   const contractActive = !!(contract?.talentConfirmedAt && contract?.recruiterConfirmedAt)
-  const questions = QUESTIONS[side]
+  const questions = QUESTION_KEYS[side]
 
   const statusMeta = {
-    strong: { icon: CheckCircle2, cls: 'text-emerald-600', bg: 'bg-emerald-100', label: 'Strong' },
-    gap: { icon: Coffee, cls: 'text-amber-600', bg: 'bg-amber-100', label: 'Expectations gap — time for a coffee' },
-    risk: { icon: AlertTriangle, cls: 'text-red-600', bg: 'bg-red-100', label: 'At risk — act now' },
-    waiting: { icon: Clock, cls: 'text-sky-600', bg: 'bg-sky-100', label: 'Waiting for the other side' },
+    strong: { icon: CheckCircle2, cls: 'text-emerald-600', bg: 'bg-emerald-100', label: t('retention.status.strong') },
+    gap: { icon: Coffee, cls: 'text-amber-600', bg: 'bg-amber-100', label: t('retention.status.gap') },
+    risk: { icon: AlertTriangle, cls: 'text-red-600', bg: 'bg-red-100', label: t('retention.status.risk') },
+    waiting: { icon: Clock, cls: 'text-sky-600', bg: 'bg-sky-100', label: t('retention.status.waiting') },
     none: { icon: Clock, cls: 'text-muted-foreground', bg: 'bg-muted', label: '' },
   }
 
@@ -151,7 +145,7 @@ export default function Retention() {
         <div className="rounded-3xl border border-border bg-card p-6 shadow-sm sm:p-7">
           <div className="flex items-center gap-3">
             <FileSignature className="h-5 w-5 text-primary" />
-            <h2 className="font-display text-xl font-semibold">The connection contract</h2>
+            <h2 className="font-display text-xl font-semibold">{t('retention.contract')}</h2>
             {contractActive && (
               <span className="ml-auto inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-bold text-emerald-800">
                 <CheckCircle2 className="h-3.5 w-3.5" /> Active
@@ -184,7 +178,7 @@ export default function Retention() {
                 <textarea rows={4} value={exp} onChange={(e) => setExp(e.target.value)} className="mt-1.5 w-full rounded-xl border border-input bg-background px-3.5 py-2.5 text-sm leading-relaxed outline-none focus:border-primary" />
               </div>
               <div>
-                <label className="text-sm font-semibold">What both sides commit to</label>
+                <label className="text-sm font-semibold">{t('retention.contractSub')}</label>
                 <textarea rows={4} value={com} onChange={(e) => setCom(e.target.value)} className="mt-1.5 w-full rounded-xl border border-input bg-background px-3.5 py-2.5 text-sm leading-relaxed outline-none focus:border-primary" />
               </div>
               <button
@@ -204,7 +198,7 @@ export default function Retention() {
                 <p className="mt-1 text-sm leading-relaxed">{contract.expectations}</p>
               </div>
               <div className="rounded-2xl bg-muted/50 p-4">
-                <div className="text-xs font-bold uppercase tracking-widest text-muted-foreground">What both sides commit to</div>
+                <div className="text-xs font-bold uppercase tracking-widest text-muted-foreground">{t('retention.contractSub')}</div>
                 <p className="mt-1 text-sm leading-relaxed">{contract.commitments}</p>
               </div>
               <div className="flex flex-wrap gap-2">
@@ -236,7 +230,7 @@ export default function Retention() {
         <div className="rounded-3xl border border-border bg-card p-6 shadow-sm sm:p-7">
           <div className="flex items-center gap-3">
             <Flame className="h-5 w-5 text-primary" />
-            <h2 className="font-display text-xl font-semibold">Pulse check-in</h2>
+            <h2 className="font-display text-xl font-semibold">{t('retention.pulse')}</h2>
           </div>
 
           {duePoint != null ? (
@@ -246,16 +240,16 @@ export default function Retention() {
               </div>
               <div className="mt-4 space-y-5">
                 {questions.map((q) => (
-                  <div key={q.key}>
-                    <div className="mb-2 text-sm font-medium">{q.q}</div>
-                    <Scale value={scores[q.key as keyof typeof scores]} onChange={(v) => setScores((s) => ({ ...s, [q.key]: v }))} />
+                  <div key={q}>
+                    <div className="mb-2 text-sm font-medium">{t(`retention.q.${side}.${q}`)}</div>
+                    <Scale value={scores[q as keyof typeof scores]} onChange={(v) => setScores((s) => ({ ...s, [q]: v }))} />
                   </div>
                 ))}
                 <textarea
                   rows={2}
                   value={note}
                   onChange={(e) => setNote(e.target.value)}
-                  placeholder="Anything to note for yourself (private — only you see this)"
+                  placeholder={t('retention.notePh')}
                   className="w-full rounded-xl border border-input bg-background px-3.5 py-2.5 text-sm outline-none focus:border-primary"
                 />
                 <button
@@ -285,8 +279,8 @@ export default function Retention() {
 
       {/* CONNECTION HEALTH TIMELINE */}
       <div className="mt-6 rounded-3xl border border-border bg-card p-6 shadow-sm sm:p-7">
-        <h2 className="font-display text-xl font-semibold">Connection health</h2>
-        <p className="mt-1 text-sm text-muted-foreground">Both sides check in at every milestone — the gap between the two is what matters.</p>
+        <h2 className="font-display text-xl font-semibold">{t('retention.health')}</h2>
+        <p className="mt-1 text-sm text-muted-foreground">{t('retention.healthSub')}</p>
         <div className="mt-5 grid gap-3 sm:grid-cols-4">
           {POINTS.map((p) => {
             const talentP = pulses.find((x) => x.dayPoint === p && x.respondent === 'talent')
@@ -320,7 +314,7 @@ export default function Retention() {
       <div className="mt-6 rounded-3xl border border-border bg-card p-6 shadow-sm sm:p-7">
         <div className="flex items-center gap-3">
           <Users className="h-5 w-5 text-primary" />
-          <h2 className="font-display text-xl font-semibold">Alumni buddy</h2>
+          <h2 className="font-display text-xl font-semibold">{t('retention.buddy')}</h2>
         </div>
         <p className="mt-1 text-sm text-muted-foreground">
           Someone who walked this path and stayed — for the questions {firstName} won't ask the boss.
@@ -341,7 +335,7 @@ export default function Retention() {
               onChange={(e) => setBuddyId(Number(e.target.value) || null)}
               className="rounded-xl border border-input bg-background px-3.5 py-2.5 text-sm outline-none focus:border-primary"
             >
-              <option value="">Choose an alumnus…</option>
+              <option value="">{t('retention.chooseAlumnus')}</option>
               {(alumni ?? []).map((a) => (
                 <option key={a.id} value={a.id}>{a.name} — {a.role}</option>
               ))}
