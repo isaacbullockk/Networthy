@@ -31,6 +31,27 @@ export const en = {
     lockedVideoBody: 'Video intros unlock once you connect — choose first on skills and story.',
     whyMatch: 'Why this talent matches you',
   },
+  how: {
+    eyebrow: 'How it works',
+    heading: 'No CVs. Just people, proven.',
+    sub: 'Five steps on each side — each one designed so judgment happens on capability, not on a name.',
+    talentTitle: 'For talent',
+    employerTitle: 'For employers',
+    talent: [
+      { t: 'Tell your story', d: 'Build your profile in your own language — English, Dutch or Arabic. No CV needed.' },
+      { t: 'Get verified', d: 'An independent professional checks your skills in a real conversation. Nothing goes public without your approval.' },
+      { t: 'Get discovered', d: 'Employers see what you can do before they see your name or where you are from.' },
+      { t: 'Connect', d: 'A video chat, some questions, then a real visit at the company. You meet the people, they meet you.' },
+      { t: 'Get hired — and stay', d: 'For 90 days NetWorthy checks in with both of you, so small problems never become resignations.' },
+    ],
+    employer: [
+      { t: 'Join the pool', d: 'Every recruiter is personally approved by NetWorthy — a trusted space, not a job board.' },
+      { t: 'Browse skills-first', d: 'Judge purely on verified skills and stories. Names and faces appear only after you connect.' },
+      { t: 'Meet before you commit', d: 'Video chat first, then questions, then an in-house visit. No hiring on paper.' },
+      { t: 'Hire on connection', d: 'When it clicks, it clicks — with skills already independently verified.' },
+      { t: 'Prove it works', d: 'Check-ins on days 7, 30, 60 and 90 track every hire. Your retention rate becomes your reputation.' },
+    ],
+  },
   auth: {
     signIn: 'Sign in',
     signingIn: 'Signing in…',

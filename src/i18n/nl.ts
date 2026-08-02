@@ -31,6 +31,27 @@ export const nl = {
     lockedVideoBody: 'Video-intro’s ontgrendelen zodra je verbindt — kies eerst op skills en verhaal.',
     whyMatch: 'Waarom dit talent bij je past',
   },
+  how: {
+    eyebrow: 'Hoe het werkt',
+    heading: 'Geen cv’s. Gewoon mensen, bewezen.',
+    sub: 'Vijf stappen aan beide kanten — elke stap zo ontworpen dat het oordeel over kunnen gaat, niet over een naam.',
+    talentTitle: 'Voor talent',
+    employerTitle: 'Voor werkgevers',
+    talent: [
+      { t: 'Vertel je verhaal', d: 'Maak je profiel in je eigen taal — Nederlands, Engels of Arabisch. Geen cv nodig.' },
+      { t: 'Word getoetst', d: 'Een onafhankelijke vakman of -vrouw checkt je skills in een echt gesprek. Niets wordt zichtbaar zonder jouw goedkeuring.' },
+      { t: 'Word gevonden', d: 'Werkgevers zien eerst wat je kunt, pas daarna je naam of herkomst.' },
+      { t: 'Verbind', d: 'Een videogesprek, wat vragen, dan een echt bezoek bij het bedrijf. Jullie leren elkaar echt kennen.' },
+      { t: 'Aangenomen — en blijven', d: '90 dagen lang checkt NetWorthy bij jullie allebei in, zodat kleine problemen geen ontslag worden.' },
+    ],
+    employer: [
+      { t: 'Word lid', d: 'Iedere recruiter wordt persoonlijk goedgekeurd door NetWorthy — een vertrouwde plek, geen vacaturebank.' },
+      { t: 'Kijk skills-first', d: 'Beoordeel puur op getoetste skills en verhalen. Naam en gezicht verschijnen pas ná het verbinden.' },
+      { t: 'Ontmoet vóór je kiest', d: 'Eerst videobellen, dan vragen, dan een bezoek op de werkvloer. Niemand aannemen op papier.' },
+      { t: 'Neem aan op verbinding', d: 'Als het klikt, klikt het — met skills die al onafhankelijk zijn getoetst.' },
+      { t: 'Bewijs dat het werkt', d: 'Check-ins op dag 7, 30, 60 en 90 volgen iedere aanname. Jouw retentiecijfer wordt je reputatie.' },
+    ],
+  },
   auth: {
     signIn: 'Inloggen',
     signingIn: 'Inloggen…',

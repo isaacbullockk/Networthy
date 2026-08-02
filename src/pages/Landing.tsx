@@ -1,14 +1,20 @@
 import { Link } from 'react-router'
 import {
   Building2, Handshake, ArrowRight, Heart, TrendingUp, Quote, ArrowRightLeft,
-  Languages, ShieldCheck,
+  Languages, ShieldCheck, UserRound,
 } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import heroImg from '@/assets/hero.jpg'
 import { landing, trust } from '@/config/poolContent'
 
-const { hero, mission, howItWorks, teachLearn, quote, values, retention, cta } = landing
+const { hero, mission, teachLearn, quote, values, retention, cta } = landing
+
+type HowStep = { t: string; d: string }
 
 export default function Landing() {
+  const { t } = useTranslation()
+  const talentSteps = t('how.talent', { returnObjects: true }) as HowStep[]
+  const employerSteps = t('how.employer', { returnObjects: true }) as HowStep[]
   return (
     <div>
       {/* HERO */}
@@ -115,28 +121,42 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* HOW IT WORKS */}
+      {/* HOW IT WORKS — two journeys, translated (EN/NL/AR) */}
       <section className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:py-28">
         <div className="max-w-2xl">
-          <div className="text-xs font-bold uppercase tracking-widest text-primary">{howItWorks.eyebrow}</div>
+          <div className="text-xs font-bold uppercase tracking-widest text-primary">{t('how.eyebrow')}</div>
           <h2 className="mt-3 font-display text-4xl font-semibold tracking-tight text-balance sm:text-5xl">
-            {howItWorks.heading}
+            {t('how.heading')}
           </h2>
           <p className="mt-4 text-lg text-muted-foreground">
-            {howItWorks.intro}
+            {t('how.sub')}
           </p>
         </div>
-        <div className="mt-14 grid gap-6 md:grid-cols-2 xl:grid-cols-4">
-          {howItWorks.steps.map((s) => (
-            <div key={s.step} className="group relative flex flex-col rounded-3xl border border-border bg-card p-7 shadow-sm transition hover:-translate-y-1 hover:shadow-xl">
-              <div className="flex items-center justify-between">
-                <div className="grid h-12 w-12 place-items-center rounded-2xl bg-primary/10 text-primary transition group-hover:bg-primary group-hover:text-primary-foreground">
-                  <s.icon className="h-6 w-6" />
+        <div className="mt-14 grid gap-6 lg:grid-cols-2">
+          {([
+            { key: 'talent', icon: UserRound, title: t('how.talentTitle'), steps: talentSteps, accent: 'bg-primary/10 text-primary' },
+            { key: 'employer', icon: Building2, title: t('how.employerTitle'), steps: employerSteps, accent: 'bg-secondary/10 text-secondary' },
+          ]).map((side) => (
+            <div key={side.key} className="rounded-3xl border border-border bg-card p-7 shadow-sm sm:p-8">
+              <div className="flex items-center gap-3">
+                <div className={`grid h-11 w-11 place-items-center rounded-2xl ${side.accent}`}>
+                  <side.icon className="h-5.5 w-5.5" />
                 </div>
-                <span className="font-display text-4xl font-semibold text-muted">{s.step}</span>
+                <h3 className="font-display text-2xl font-semibold">{side.title}</h3>
               </div>
-              <h3 className="mt-5 font-display text-xl font-semibold">{s.title}</h3>
-              <p className="mt-2.5 text-sm leading-relaxed text-muted-foreground">{s.text}</p>
+              <ol className="mt-7 space-y-6">
+                {side.steps.map((s, i) => (
+                  <li key={s.t} className="flex gap-4">
+                    <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-muted font-display text-sm font-bold text-foreground/70">
+                      {i + 1}
+                    </span>
+                    <div>
+                      <div className="font-semibold leading-snug">{s.t}</div>
+                      <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{s.d}</p>
+                    </div>
+                  </li>
+                ))}
+              </ol>
             </div>
           ))}
         </div>
