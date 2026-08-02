@@ -15,12 +15,18 @@ RUN npm ci --include=dev --no-audit --no-fund --fetch-retries=5 || { \
     }
 
 # Copy source and build frontend (dist/public) + server bundle (dist/boot.js)
+# Also bundle the guarded seed script (db/seed.ts → db/seed-runtime.js) so the
+# launch content can be seeded from inside the container (Railway Console) —
+# no external network access to the database needed.
 COPY . .
 RUN test -x node_modules/.bin/vite || { \
       echo '=== vite missing after npm ci ==='; npm config list; \
       exit 1; \
     }
 RUN npm run build \
+  && npx esbuild db/seed.ts --platform=node --bundle --format=esm \
+       --outfile=db/seed-runtime.js \
+       --banner:js="import { createRequire } from 'module';const require = createRequire(import.meta.url);" \
   && npm prune --omit=dev
 
 # ---------- Runtime stage ----------
@@ -36,6 +42,7 @@ COPY --from=build /app/dist ./dist
 # Database migrations + idempotent runner (applied at container start)
 COPY --from=build /app/db/migrations ./db/migrations
 COPY --from=build /app/db/run-migrations.mjs ./db/run-migrations.mjs
+COPY --from=build /app/db/seed-runtime.js ./db/seed-runtime.js
 
 EXPOSE 3000
 

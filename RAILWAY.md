@@ -41,12 +41,18 @@ from your local `.env` into Railway. Nothing else to do — schema and demo data
 are already there (migrations self-verify at boot).
 
 **Option B — fresh Railway MySQL:** add the **MySQL** plugin to the project and
-copy its `DATABASE_URL` into the app variables. The container creates all
-tables on first boot. Then seed the launch content once, from your machine:
+set `DATABASE_URL=${{MySQL.MYSQL_URL}}` in the app variables. The container
+creates all tables on first boot. Then seed the launch content once — from
+**inside** the container, so no external database access is needed: open the
+app service → **Console** tab and run:
 
 ```bash
-DATABASE_URL=<railway-mysql-url> SEED_DATABASE=yes SEED_PASSWORD='<strong-password>' ADMIN_PASSWORD='<admin-password>' npx tsx db/seed.ts
+SEED_DATABASE=yes SEED_PASSWORD='<strong-password>' ADMIN_PASSWORD='<admin-password>' node db/seed-runtime.js
 ```
+
+(`db/seed-runtime.js` is the bundled equivalent of `db/seed.ts`, built into
+the image at Docker build time. From your own machine with repo + Node, the
+classic route also works: `DATABASE_URL=<mysql-public-url> SEED_DATABASE=yes npx tsx db/seed.ts`.)
 
 The seed script **wipes every table** and therefore refuses to run without
 `SEED_DATABASE=yes` — it can never hit production by accident. Passwords are
