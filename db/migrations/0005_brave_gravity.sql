@@ -1,0 +1,1 @@
+ALTER TABLE `sessions` ADD `is_guest` boolean DEFAULT false NOT NULL;

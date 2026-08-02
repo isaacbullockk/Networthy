@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router'
-import { Sparkles, ArrowRight, AlertCircle, ShieldCheck } from 'lucide-react'
+import { Sparkles, ArrowRight, AlertCircle, ShieldCheck, Eye } from 'lucide-react'
 import { useAuth } from '@/lib/auth'
 import { brand, trust } from '@/config/poolContent'
 
@@ -12,7 +12,7 @@ function homeFor(role: string) {
 }
 
 export default function Login() {
-  const { login, user } = useAuth()
+  const { login, guestLogin, user } = useAuth()
   const navigate = useNavigate()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -92,6 +92,27 @@ export default function Login() {
             className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-6 py-3.5 font-semibold text-primary-foreground shadow-lg shadow-primary/25 transition hover:brightness-110 disabled:opacity-50"
           >
             {busy ? 'Signing in…' : 'Sign in'} <ArrowRight className="h-4.5 w-4.5" />
+          </button>
+          <div className="mt-4 flex items-center gap-3 text-xs text-secondary-foreground/40">
+            <span className="h-px flex-1 bg-white/10" /> or <span className="h-px flex-1 bg-white/10" />
+          </div>
+          <button
+            type="button"
+            disabled={busy}
+            onClick={async () => {
+              setBusy(true)
+              setError('')
+              try {
+                await guestLogin()
+                navigate('/dashboard')
+              } catch {
+                setError('Guest preview is unavailable right now.')
+                setBusy(false)
+              }
+            }}
+            className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/5 px-6 py-3 font-semibold text-secondary-foreground transition hover:border-primary/50 hover:bg-white/10 disabled:opacity-50"
+          >
+            <Eye className="h-4.5 w-4.5 text-primary" /> Explore as guest — read-only preview
           </button>
           <p className="mt-5 text-center text-sm text-secondary-foreground/60">
             New to NetWorthy?{' '}

@@ -1,5 +1,5 @@
 import { Link, NavLink, Outlet } from 'react-router'
-import { Sparkles, LogOut } from 'lucide-react'
+import { Sparkles, LogOut, Eye } from 'lucide-react'
 import { useAuth } from '@/lib/auth'
 import { footer } from '@/config/poolContent'
 
@@ -43,6 +43,12 @@ export default function Layout() {
 
   return (
     <div className="min-h-screen flex flex-col">
+      {user?.isGuest && (
+        <div className="flex items-center justify-center gap-2 bg-amber-500/15 px-4 py-2 text-center text-xs font-semibold text-amber-700 dark:text-amber-400">
+          <Eye className="h-3.5 w-3.5" />
+          Guest preview — you're viewing launch content read-only. Actions are disabled.
+        </div>
+      )}
       <header className="sticky top-0 z-40 border-b border-border/70 bg-background/85 backdrop-blur-md">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6">
           <Link to={user ? homeFor(user.role) : '/'} className="flex items-center gap-2.5">

@@ -11,6 +11,7 @@ import {
   index,
   uniqueIndex,
   customType,
+  boolean,
 } from "drizzle-orm/mysql-core";
 
 /** LONGBLOB column (drizzle has no built-in blob in this version) */
@@ -47,6 +48,8 @@ export const sessions = mysqlTable(
     id: serial("id").primaryKey(),
     token: varchar("token", { length: 64 }).notNull().unique(),
     userId: bigint("user_id", { mode: "number", unsigned: true }).notNull(),
+    /** Guest preview sessions: full read access, every mutation rejected */
+    isGuest: boolean("is_guest").notNull().default(false),
     expiresAt: timestamp("expires_at").notNull(),
     createdAt: timestamp("created_at").defaultNow().notNull(),
   },

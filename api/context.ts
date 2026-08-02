@@ -7,6 +7,8 @@ export type TrpcContext = {
   req: Request;
   resHeaders: Headers;
   user: User | null;
+  /** True for guest-preview sessions (read-only, mutations blocked) */
+  isGuest: boolean;
 };
 
 const COOKIE_NAME = "nw_session";
@@ -23,21 +25,28 @@ function readCookie(req: Request, name: string): string | null {
 
 /** Resolve the logged-in user from the session cookie (raw HTTP endpoints). */
 export async function getSessionUser(req: Request): Promise<User | null> {
+  return (await getSession(req)).user;
+}
+
+/** Resolve session + user together. */
+export async function getSession(
+  req: Request
+): Promise<{ user: User | null; isGuest: boolean }> {
   const token = readCookie(req, COOKIE_NAME);
-  if (!token) return null;
+  if (!token) return { user: null, isGuest: false };
   const db = getDb();
   const session = await db.query.sessions.findFirst({
     where: and(eq(sessions.token, token), gt(sessions.expiresAt, new Date())),
   });
-  if (!session) return null;
-  return (
-    (await db.query.users.findFirst({ where: eq(users.id, session.userId) })) ?? null
-  );
+  if (!session) return { user: null, isGuest: false };
+  const user =
+    (await db.query.users.findFirst({ where: eq(users.id, session.userId) })) ?? null;
+  return { user, isGuest: session.isGuest };
 }
 
 export async function createContext(
   opts: FetchCreateContextFnOptions
 ): Promise<TrpcContext> {
-  const user = await getSessionUser(opts.req);
-  return { req: opts.req, resHeaders: opts.resHeaders, user };
+  const { user, isGuest } = await getSession(opts.req);
+  return { req: opts.req, resHeaders: opts.resHeaders, user, isGuest };
 }

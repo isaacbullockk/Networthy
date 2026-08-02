@@ -5,7 +5,7 @@ import { createRouter, publicQuery } from "../middleware";
 import { authedQuery } from "../auth";
 import { getDb } from "../queries/connection";
 import { sessions, talents, users } from "@db/schema";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { COOKIE_NAME } from "../context";
 import { hashPassword, verifyPassword } from "../lib/password";
 import { rateLimit, clientIp } from "../lib/rateLimit";
@@ -23,12 +23,13 @@ function sessionCookie(token: string, maxAgeSec: number) {
   return `${COOKIE_NAME}=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${maxAgeSec}${secure}`;
 }
 
-async function createSession(userId: number) {
+async function createSession(userId: number, isGuest = false) {
   const db = getDb();
   const token = randomBytes(24).toString("hex");
   await db.insert(sessions).values({
     token,
     userId,
+    isGuest,
     expiresAt: new Date(Date.now() + THIRTY_DAYS),
   });
   return token;
@@ -125,7 +126,38 @@ export const authRouter = createRouter({
       return publicUser(user!);
     }),
 
-  me: publicQuery.query(({ ctx }) => (ctx.user ? publicUser(ctx.user) : null)),
+  /**
+   * Guest preview: a read-only session borrowing the showcase recruiter's
+   * view. No password, heavily rate-limited, every mutation blocked by the
+   * authedQuery guard. The showcase account is launch content by design.
+   */
+  guestLogin: publicQuery.mutation(async ({ ctx }) => {
+    const ip = clientIp(ctx.req);
+    if (!rateLimit(`guest:${ip}`, 20, 60 * 60_000)) {
+      throw new TRPCError({
+        code: "TOO_MANY_REQUESTS",
+        message: "Too many guest sessions — try again later",
+      });
+    }
+    const db = getDb();
+    const showcaseEmail = (process.env.SHOWCASE_EMAIL || "lisa@picnic.nl").toLowerCase();
+    const showcase = await db.query.users.findFirst({
+      where: eq(users.email, showcaseEmail),
+    });
+    if (!showcase) {
+      throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Preview is not available yet" });
+    }
+    // Keep the sessions table tidy: one active guest session per viewer is
+    // enough — drop stale guest sessions for the showcase account first.
+    await db.delete(sessions).where(and(eq(sessions.userId, showcase.id), eq(sessions.isGuest, true)));
+    const token = await createSession(showcase.id, true);
+    ctx.resHeaders.set("set-cookie", sessionCookie(token, THIRTY_DAYS / 1000));
+    return { ...publicUser(showcase), isGuest: true };
+  }),
+
+  me: publicQuery.query(({ ctx }) =>
+    ctx.user ? { ...publicUser(ctx.user), isGuest: ctx.isGuest } : null
+  ),
 
   logout: authedQuery.mutation(async ({ ctx }) => {
     const db = getDb();

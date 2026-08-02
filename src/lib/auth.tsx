@@ -15,6 +15,7 @@ interface AuthState {
   loading: boolean
   login: (email: string, password: string) => Promise<SessionUser>
   register: (input: RegisterInput) => Promise<SessionUser>
+  guestLogin: () => Promise<SessionUser>
   logout: () => void
 }
 
@@ -45,6 +46,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return (await registerMut.mutateAsync({ ...input, email: input.email.toLowerCase() })) as SessionUser
   }
 
+  const guestMut = trpc.auth.guestLogin.useMutation({
+    onSuccess: () => utils.invalidate(),
+  })
+
+  const guestLogin = async () => {
+    return (await guestMut.mutateAsync()) as SessionUser
+  }
+
   return (
     <Ctx.Provider
       value={{
@@ -52,6 +61,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         loading: me.isLoading,
         login,
         register,
+        guestLogin,
         logout: () => logoutMut.mutate(),
       }}
     >

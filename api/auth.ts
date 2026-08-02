@@ -3,8 +3,16 @@ import { publicQuery } from "./middleware";
 import type { User } from "@db/schema";
 
 /** Requires a logged-in user; narrows ctx.user to non-null. */
-export const authedQuery = publicQuery.use(({ ctx, next }) => {
+export const authedQuery = publicQuery.use(({ ctx, next, path, type }) => {
   if (!ctx.user) throw new TRPCError({ code: "UNAUTHORIZED" });
+  // Guest preview sessions are read-only: every mutation is rejected here,
+  // at the single choke point all authed routers inherit. Logout stays open.
+  if (ctx.isGuest && type === "mutation" && path !== "auth.logout") {
+    throw new TRPCError({
+      code: "FORBIDDEN",
+      message: "Guest preview is read-only — create an account to take action",
+    });
+  }
   return next({ ctx: { ...ctx, user: ctx.user } });
 });
 
