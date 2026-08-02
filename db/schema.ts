@@ -39,6 +39,8 @@ export const users = mysqlTable(
     approvedAt: timestamp("approved_at"),
     /** Preferred UI language (en / nl / ar) — pulses & emails follow this */
     locale: varchar("locale", { length: 8 }).notNull().default("en"),
+    /** Skills-first browsing: identity (name, origin, video) hidden until a match exists */
+    anonymousBrowsing: boolean("anonymous_browsing").notNull().default(false),
     createdAt: timestamp("created_at").defaultNow().notNull(),
   },
   (t) => ({ emailIdx: index("email_idx").on(t.email) })

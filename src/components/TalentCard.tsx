@@ -1,5 +1,6 @@
 import { Link } from 'react-router'
-import { MapPin, Languages, Video, ArrowRight, ShieldCheck } from 'lucide-react'
+import { MapPin, Languages, Video, ArrowRight, ShieldCheck, EyeOff } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import type { Talent } from '@/types'
 import Avatar from './Avatar'
 
@@ -22,15 +23,24 @@ function ScoreRing({ score }: { score: number }) {
   )
 }
 
-export default function TalentCard({ talent }: { talent: Talent & { verifiedCount?: number } }) {
+export default function TalentCard({ talent }: { talent: Talent & { verifiedCount?: number; anonymized?: boolean } }) {
+  const { t } = useTranslation()
+  const anon = talent.anonymized === true
+  const displayName = anon ? `${t('anon.codename')} #${1000 + talent.id}` : talent.name
   return (
     <div className="group flex flex-col rounded-2xl border border-border bg-card p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg">
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-3.5">
-          <Avatar name={talent.name} gradient={talent.gradient} />
+          {anon ? (
+            <div className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-muted text-muted-foreground shadow-md">
+              <EyeOff className="h-6 w-6" />
+            </div>
+          ) : (
+            <Avatar name={talent.name} gradient={talent.gradient} />
+          )}
           <div>
             <div className="flex items-center gap-1.5 font-display text-lg font-semibold leading-tight">
-              {talent.name}
+              {displayName}
               {(talent.verifiedCount ?? 0) > 0 && (
                 <span title="Verified by an independent professional">
                   <ShieldCheck className="h-4.5 w-4.5 text-emerald-600" />
@@ -51,7 +61,11 @@ export default function TalentCard({ talent }: { talent: Talent & { verifiedCoun
       </p>
 
       <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
-        <span className="inline-flex items-center gap-1"><MapPin className="h-3.5 w-3.5" />{talent.origin} · {talent.yearsInNL} yrs in NL</span>
+        {anon ? (
+          <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2.5 py-1 font-medium"><EyeOff className="h-3 w-3" />{t('anon.hidden')}</span>
+        ) : (
+          <span className="inline-flex items-center gap-1"><MapPin className="h-3.5 w-3.5" />{talent.origin} · {talent.yearsInNL} yrs in NL</span>
+        )}
         <span className="inline-flex items-center gap-1"><Languages className="h-3.5 w-3.5" />{talent.languages.slice(0, 3).join(', ')}</span>
       </div>
 
@@ -72,7 +86,7 @@ export default function TalentCard({ talent }: { talent: Talent & { verifiedCoun
           to={`/call/${talent.id}`}
           className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-secondary px-3 py-2.5 text-sm font-semibold text-secondary-foreground transition hover:brightness-110"
         >
-          <Video className="h-4 w-4" /> Video chat
+          <Video className="h-4 w-4" /> {anon ? t('anon.connect') : 'Video chat'}
         </Link>
       </div>
     </div>

@@ -1,0 +1,1 @@
+ALTER TABLE `users` ADD `anonymous_browsing` boolean DEFAULT false NOT NULL;

@@ -1,13 +1,15 @@
 import { Link, useParams } from 'react-router'
 import {
   ArrowLeft, Video, ClipboardList, Building2, Play, MapPin, Languages,
-  Clock, Sparkles, Quote, CheckCircle2, ShieldCheck, BadgeCheck,
+  Clock, Sparkles, Quote, CheckCircle2, ShieldCheck, BadgeCheck, EyeOff, Lock,
 } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { trpc } from '@/providers/trpc'
 import Avatar from '@/components/Avatar'
 import { trust } from '@/config/poolContent'
 
 export default function TalentProfile() {
+  const { t } = useTranslation()
   const { id } = useParams()
   const talentId = Number(id)
   const { data: talent, isLoading } = trpc.talents.byId.useQuery(
@@ -36,6 +38,10 @@ export default function TalentProfile() {
     )
   }
 
+  const anon = talent.anonymized === true
+  const displayName = anon ? `${t('anon.codename')} #${1000 + talent.id}` : talent.name
+  const firstName = anon ? t('anon.codename') : talent.name.split(' ')[0]
+
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:py-12">
       <Link to="/discover" className="inline-flex items-center gap-2 text-sm font-semibold text-muted-foreground transition hover:text-foreground">
@@ -52,10 +58,16 @@ export default function TalentProfile() {
               <div className="-mt-12 flex flex-wrap items-end justify-between gap-4">
                 <div className="flex items-end gap-4">
                   <div className="rounded-3xl border-4 border-card shadow-lg">
-                    <Avatar name={talent.name} gradient={talent.gradient} size="xl" />
+                    {anon ? (
+                      <div className="grid h-32 w-32 shrink-0 place-items-center rounded-2xl bg-muted text-muted-foreground shadow-md">
+                        <EyeOff className="h-12 w-12" />
+                      </div>
+                    ) : (
+                      <Avatar name={talent.name} gradient={talent.gradient} size="xl" />
+                    )}
                   </div>
                   <div className="pb-2">
-                    <h1 className="font-display text-3xl font-semibold tracking-tight">{talent.name}</h1>
+                    <h1 className="font-display text-3xl font-semibold tracking-tight">{displayName}</h1>
                     <div className="text-lg font-medium text-primary">{talent.role}</div>
                   </div>
                 </div>
@@ -70,7 +82,11 @@ export default function TalentProfile() {
               </p>
 
               <div className="mt-5 flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted-foreground">
-                <span className="inline-flex items-center gap-1.5"><MapPin className="h-4 w-4" /> From {talent.origin} · {talent.yearsInNL} years in the Netherlands</span>
+                {anon ? (
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-muted px-3 py-1.5 text-xs font-semibold"><EyeOff className="h-3.5 w-3.5" /> {t('anon.hidden')}</span>
+                ) : (
+                  <span className="inline-flex items-center gap-1.5"><MapPin className="h-4 w-4" /> From {talent.origin} · {talent.yearsInNL} years in the Netherlands</span>
+                )}
                 <span className="inline-flex items-center gap-1.5"><Languages className="h-4 w-4" /> {talent.languages.join(' · ')}</span>
                 <span className="inline-flex items-center gap-1.5"><Clock className="h-4 w-4" /> {talent.availability}</span>
               </div>
@@ -165,9 +181,18 @@ export default function TalentProfile() {
 
         {/* SIDEBAR */}
         <div className="space-y-6">
-          {/* Video intro */}
+          {/* Video intro — locked while skills-first browsing (video is identity) */}
           <div className="overflow-hidden rounded-3xl border border-border bg-card shadow-sm">
-            {videoMeta ? (
+            {anon ? (
+              <div className="grid h-52 place-items-center bg-muted/60">
+                <div className="text-center text-muted-foreground">
+                  <div className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-card shadow-sm">
+                    <Lock className="h-6 w-6" />
+                  </div>
+                  <div className="mt-3 px-6 text-sm font-semibold">{t('anon.lockedVideoTitle')}</div>
+                </div>
+              </div>
+            ) : videoMeta ? (
               <video
                 src={`/api/video-intro/${talent.id}?v=${new Date(videoMeta.updatedAt).getTime()}`}
                 controls
@@ -185,16 +210,20 @@ export default function TalentProfile() {
             <div className="p-5">
               <div className="font-display text-lg font-semibold">Video introduction</div>
               <p className="mt-1 text-sm text-muted-foreground">
-                {videoMeta
-                  ? `${talent.name.split(' ')[0]} introduces themselves in their own words — distance never decides who gets met.`
-                  : `${talent.name.split(' ')[0]} hasn't recorded their intro yet — start a video chat to meet them live.`}
+                {anon
+                  ? t('anon.lockedVideoBody')
+                  : videoMeta
+                    ? `${firstName} introduces themselves in their own words — distance never decides who gets met.`
+                    : `${firstName} hasn't recorded their intro yet — start a video chat to meet them live.`}
               </p>
             </div>
           </div>
 
           {/* Why this match */}
           <div className="rounded-3xl border border-border bg-card p-5 shadow-sm sm:p-6">
-            <div className="font-display text-lg font-semibold">Why {talent.name.split(' ')[0]} matches you</div>
+            <div className="font-display text-lg font-semibold">
+              {anon ? t('anon.whyMatch') : `Why ${firstName} matches you`}
+            </div>
             <ul className="mt-3 space-y-2.5">
               {talent.matchReasons.map((r) => (
                 <li key={r} className="flex gap-2.5 text-sm leading-snug text-muted-foreground">

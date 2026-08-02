@@ -20,6 +20,17 @@ export const nl = {
   guest: {
     banner: 'Gast-preview — je bekijkt launchcontent, alleen-lezen. Acties zijn uitgeschakeld.',
   },
+  anon: {
+    toggle: 'Skills-first browsen',
+    onDesc: 'Namen, herkomst en video-intro’s blijven verborgen tot je verbindt.',
+    offDesc: 'Toon namen, herkomst en video-intro’s tijdens het browsen.',
+    codename: 'Talent',
+    hidden: 'Verborgen tot je verbindt',
+    connect: 'Verbind om te onthullen',
+    lockedVideoTitle: 'Video-introductie vergrendeld',
+    lockedVideoBody: 'Video-intro’s ontgrendelen zodra je verbindt — kies eerst op skills en verhaal.',
+    whyMatch: 'Waarom dit talent bij je past',
+  },
   auth: {
     signIn: 'Inloggen',
     signingIn: 'Inloggen…',

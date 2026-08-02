@@ -7,6 +7,7 @@ import { createContext, getSessionUser } from "./context";
 import { getDb } from "./queries/connection";
 import { videoIntros } from "@db/schema";
 import { eq } from "drizzle-orm";
+import { shouldMask } from "./lib/anonymize";
 import { env } from "./lib/env";
 
 const app = new Hono<{ Bindings: HttpBindings }>();
@@ -44,12 +45,16 @@ app.post("/api/video-intro", async (c) => {
   return c.json({ ok: true, bytes: buf.byteLength });
 });
 
-// Any logged-in user can play a talent's video intro
+// Any logged-in user can play a talent's video intro — except a skills-first
+// recruiter who hasn't connected yet (video is identity)
 app.get("/api/video-intro/:talentId", async (c) => {
   const user = await getSessionUser(c.req.raw);
   if (!user) return c.json({ error: "Unauthorized" }, 401);
   const talentId = Number(c.req.param("talentId"));
   if (!Number.isFinite(talentId)) return c.json({ error: "Bad id" }, 400);
+  if (await shouldMask(user, talentId)) {
+    return c.json({ error: "Video intro unlocks after you connect" }, 403);
+  }
   const row = await getDb().query.videoIntros.findFirst({
     where: eq(videoIntros.talentId, talentId),
   });

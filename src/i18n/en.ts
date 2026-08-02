@@ -20,6 +20,17 @@ export const en = {
   guest: {
     banner: "Guest preview — you're viewing launch content read-only. Actions are disabled.",
   },
+  anon: {
+    toggle: 'Skills-first browsing',
+    onDesc: 'Names, origins and video intros stay hidden until you connect.',
+    offDesc: 'Show names, origins and video intros while browsing.',
+    codename: 'Talent',
+    hidden: 'Hidden until you connect',
+    connect: 'Connect to reveal',
+    lockedVideoTitle: 'Video introduction locked',
+    lockedVideoBody: 'Video intros unlock once you connect — choose first on skills and story.',
+    whyMatch: 'Why this talent matches you',
+  },
   auth: {
     signIn: 'Sign in',
     signingIn: 'Signing in…',

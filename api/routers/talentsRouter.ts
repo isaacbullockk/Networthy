@@ -5,9 +5,10 @@ import { authedQuery, recruiterQuery, talentQuery } from "../auth";
 import { getDb } from "../queries/connection";
 import { assessments, talents, videoIntros } from "@db/schema";
 import { eq } from "drizzle-orm";
+import { maskTalent, revealTalent, shouldMask, unlockedTalentIds } from "../lib/anonymize";
 
 export const talentsRouter = createRouter({
-  list: recruiterQuery.query(async () => {
+  list: recruiterQuery.query(async ({ ctx }) => {
     const db = getDb();
     const all = await db.query.talents.findMany();
     const published = await db.query.assessments.findMany({
@@ -15,13 +16,22 @@ export const talentsRouter = createRouter({
     });
     const counts = new Map<number, number>();
     for (const a of published) counts.set(a.talentId, (counts.get(a.talentId) ?? 0) + 1);
-    return all.map((t) => ({ ...t, verifiedCount: counts.get(t.id) ?? 0 }));
+    // Skills-first browsing: identity stays server-side until a match exists
+    const unlocked = ctx.user.anonymousBrowsing
+      ? await unlockedTalentIds(ctx.user.id)
+      : null;
+    return all.map((t) => ({
+      ...(unlocked && !unlocked.has(t.id) ? maskTalent(t) : revealTalent(t)),
+      verifiedCount: counts.get(t.id) ?? 0,
+    }));
   }),
 
   /** Metadata for the async video intro (actual video served at /api/video-intro/:id). */
   videoMeta: authedQuery
     .input(z.object({ id: z.number() }))
-    .query(async ({ input }) => {
+    .query(async ({ ctx, input }) => {
+      // Video is identity — hidden while skills-first browsing, until connected
+      if (await shouldMask(ctx.user, input.id)) return null;
       const row = await getDb().query.videoIntros.findFirst({
         where: eq(videoIntros.talentId, input.id),
         columns: { talentId: true, mimeType: true, durationSec: true, updatedAt: true },
@@ -39,7 +49,7 @@ export const talentsRouter = createRouter({
         where: eq(talents.id, input.id),
       });
       if (!talent) throw new TRPCError({ code: "NOT_FOUND" });
-      return talent;
+      return (await shouldMask(ctx.user, input.id)) ? maskTalent(talent) : revealTalent(talent);
     }),
 
   mine: talentQuery.query(async ({ ctx }) => {

@@ -190,7 +190,7 @@ export default function VideoCall() {
     })
   }, [])
 
-  const talentName = talent?.name ?? 'your match'
+  const talentName = talent?.anonymized ? `Talent #${1000 + talentId}` : talent?.name || 'your match'
   const talentFirst = talentName.split(' ')[0]
   const talentGradient = talent?.gradient ?? 'from-orange-400 to-rose-500'
 
@@ -308,7 +308,7 @@ export default function VideoCall() {
             <div className="absolute left-0 right-0 top-0 z-10 flex items-center justify-between bg-gradient-to-b from-black/50 to-transparent p-5">
               <div>
                 <div className="font-display text-lg font-semibold">{talentName}</div>
-                <div className="text-sm text-white/60">{talent ? `${talent.role} · ${talent.origin}` : 'connecting…'}</div>
+                <div className="text-sm text-white/60">{talent ? (talent.anonymized ? talent.role : `${talent.role} · ${talent.origin}`) : 'connecting…'}</div>
               </div>
               <div className="flex items-center gap-3">
                 <span className="flex items-center gap-1.5 rounded-full bg-black/40 px-3 py-1.5 text-xs font-semibold text-white/80">

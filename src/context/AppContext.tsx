@@ -36,6 +36,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
     utils.matches.list.invalidate()
     utils.questionnaires.list.invalidate()
     utils.meetings.list.invalidate()
+    // Identity reveals once connected — refresh pool data (skills-first browsing)
+    utils.talents.list.invalidate()
+    utils.talents.byId.invalidate()
+    utils.talents.videoMeta.invalidate()
   }
 
   const createMatchMut = trpc.matches.create.useMutation({ onSuccess: invalidate })

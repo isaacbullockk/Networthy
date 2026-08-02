@@ -1,6 +1,9 @@
 import { useMemo, useState } from 'react'
-import { Search, SlidersHorizontal, Info } from 'lucide-react'
+import { Search, SlidersHorizontal, Info, EyeOff } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { trpc } from '@/providers/trpc'
+import { useAuth } from '@/lib/auth'
+import { Switch } from '@/components/ui/switch'
 import TalentCard from '@/components/TalentCard'
 import { discover } from '@/config/poolContent'
 
@@ -18,10 +21,19 @@ const SKILL_MAP: Record<string, string[]> = {
 }
 
 export default function Discover() {
+  const { t } = useTranslation()
+  const { user } = useAuth()
   const [query, setQuery] = useState('')
   const [skillFilter, setSkillFilter] = useState<string | null>(null)
   const [traitFilter, setTraitFilter] = useState<string | null>(null)
+  const utils = trpc.useUtils()
   const { data: talents, isLoading } = trpc.talents.list.useQuery()
+  const setAnon = trpc.auth.setAnonymousBrowsing.useMutation({
+    onSuccess: async () => {
+      await Promise.all([utils.talents.list.invalidate(), utils.auth.me.invalidate()])
+    },
+  })
+  const anonOn = user?.anonymousBrowsing === true
 
   const results = useMemo(() => {
     let list = [...(talents ?? [])].sort((a, b) => b.matchScore - a.matchScore)
@@ -53,9 +65,34 @@ export default function Discover() {
             {discover.sub}
           </p>
         </div>
-        <div className="flex items-center gap-2 rounded-2xl border border-border bg-card px-3 py-2 text-sm text-muted-foreground">
-          <Info className="h-4 w-4 text-primary" />
-          <span><strong className="text-foreground">{results.length}</strong> talents match your roles</span>
+        <div className="flex flex-col items-stretch gap-3">
+          <div className="flex items-center gap-2 rounded-2xl border border-border bg-card px-3 py-2 text-sm text-muted-foreground">
+            <Info className="h-4 w-4 text-primary" />
+            <span><strong className="text-foreground">{results.length}</strong> talents match your roles</span>
+          </div>
+          {/* Skills-first browsing: identity stays hidden until a match — the
+              decision to connect happens on capability, not on a name or photo. */}
+          <div
+            className={`flex items-center gap-3 rounded-2xl border px-4 py-3 transition ${
+              anonOn ? 'border-primary/40 bg-primary/5' : 'border-border bg-card'
+            }`}
+            title={user?.isGuest ? t('guest.banner') : undefined}
+          >
+            <EyeOff className={`h-4.5 w-4.5 shrink-0 ${anonOn ? 'text-primary' : 'text-muted-foreground'}`} />
+            <div className="min-w-0">
+              <div className="text-sm font-semibold leading-tight">{t('anon.toggle')}</div>
+              <div className="mt-0.5 max-w-xs text-xs leading-snug text-muted-foreground">
+                {anonOn ? t('anon.onDesc') : t('anon.offDesc')}
+              </div>
+            </div>
+            <Switch
+              checked={anonOn}
+              disabled={setAnon.isPending || user?.isGuest === true}
+              onCheckedChange={(enabled) => setAnon.mutate({ enabled })}
+              aria-label={t('anon.toggle')}
+              className="ms-auto shrink-0"
+            />
+          </div>
         </div>
       </div>
 

@@ -2,7 +2,7 @@ import { z } from "zod";
 import { randomBytes } from "node:crypto";
 import { TRPCError } from "@trpc/server";
 import { createRouter, publicQuery } from "../middleware";
-import { authedQuery } from "../auth";
+import { authedQuery, recruiterQuery } from "../auth";
 import { getDb } from "../queries/connection";
 import { sessions, talents, users } from "@db/schema";
 import { and, eq } from "drizzle-orm";
@@ -165,6 +165,18 @@ export const authRouter = createRouter({
       const db = getDb();
       await db.update(users).set({ locale: input.locale }).where(eq(users.id, ctx.user.id));
       return { ok: true };
+    }),
+
+  /** Recruiter preference: browse the pool skills-first (identity hidden until connected) */
+  setAnonymousBrowsing: recruiterQuery
+    .input(z.object({ enabled: z.boolean() }))
+    .mutation(async ({ ctx, input }) => {
+      const db = getDb();
+      await db
+        .update(users)
+        .set({ anonymousBrowsing: input.enabled })
+        .where(eq(users.id, ctx.user.id));
+      return { ok: true, enabled: input.enabled };
     }),
 
   logout: authedQuery.mutation(async ({ ctx }) => {
