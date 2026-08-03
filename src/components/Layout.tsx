@@ -2,7 +2,6 @@ import { Link, NavLink, Outlet } from 'react-router'
 import { Sparkles, LogOut, Eye } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/lib/auth'
-import { footer } from '@/config/poolContent'
 import LanguageSwitcher from '@/components/LanguageSwitcher'
 
 const RECRUITER_NAV = [
@@ -99,7 +98,7 @@ export default function Layout() {
                 to="/login"
                 className="rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm transition hover:brightness-110"
               >
-                Sign in
+                {t('auth.signIn')}
               </Link>
             )}
           </div>
@@ -115,11 +114,11 @@ export default function Layout() {
               Net<span className="text-primary">Worthy</span>
             </div>
             <p className="mt-1 max-w-sm text-sm text-secondary-foreground/70">
-              {footer.line}
+              {t('landing.footer.line')}
             </p>
           </div>
           <div className="text-sm text-secondary-foreground/60">
-            {footer.motto}
+            {t('landing.footer.motto')}
           </div>
         </div>
       </footer>

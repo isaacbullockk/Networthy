@@ -1,20 +1,28 @@
 import { Link } from 'react-router'
 import {
   Building2, Handshake, ArrowRight, Heart, TrendingUp, Quote, ArrowRightLeft,
-  Languages, ShieldCheck, UserRound,
+  Languages, ShieldCheck, UserRound, Trophy, UtensilsCrossed, Flame, Lightbulb, DoorOpen,
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import heroImg from '@/assets/hero.jpg'
-import { landing, trust } from '@/config/poolContent'
 
-const { hero, mission, teachLearn, quote, values, retention, cta } = landing
+const TEACH_ICONS = [Trophy, ArrowRightLeft, UtensilsCrossed]
+const VALUE_ICONS = [Flame, Lightbulb, DoorOpen]
 
 type HowStep = { t: string; d: string }
+type Stat = { value: string; label: string }
+type PromiseCard = { title: string; text: string }
+type RetentionItem = { k: string; v: string }
 
 export default function Landing() {
   const { t } = useTranslation()
   const talentSteps = t('how.talent', { returnObjects: true }) as HowStep[]
   const employerSteps = t('how.employer', { returnObjects: true }) as HowStep[]
+  const stats = t('landing.mission.stats', { returnObjects: true }) as Stat[]
+  const promises = t('landing.trust.promises', { returnObjects: true }) as PromiseCard[]
+  const teachCards = t('landing.teach.cards', { returnObjects: true }) as PromiseCard[]
+  const valueItems = t('landing.values.items', { returnObjects: true }) as PromiseCard[]
+  const retentionItems = t('landing.retention.items', { returnObjects: true }) as RetentionItem[]
   return (
     <div>
       {/* HERO */}
@@ -26,36 +34,36 @@ export default function Landing() {
           <div>
             <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-4 py-1.5 text-xs font-semibold uppercase tracking-widest text-primary">
               <span className="relative h-2 w-2 rounded-full bg-primary"><span className="pulse-ring absolute inset-0 text-primary" /></span>
-              {hero.eyebrow}
+              {t('landing.hero.eyebrow')}
             </div>
             <h1 className="mt-6 font-display text-5xl font-semibold leading-[1.05] tracking-tight text-balance sm:text-6xl">
-              {hero.titleBefore} <span className="text-primary">{hero.titleHighlight}</span>{hero.titleAfter}
+              {t('landing.hero.titleBefore')} <span className="text-primary">{t('landing.hero.titleHighlight')}</span>{t('landing.hero.titleAfter')}
             </h1>
             <p className="mt-6 max-w-xl text-lg leading-relaxed text-secondary-foreground/75">
-              {hero.body}
+              {t('landing.hero.body')}
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Link
                 to="/discover"
                 className="inline-flex items-center gap-2 rounded-full bg-primary px-7 py-3.5 font-semibold text-primary-foreground shadow-lg shadow-primary/30 transition hover:brightness-110"
               >
-                {hero.ctaPrimary} <ArrowRight className="h-4.5 w-4.5" />
+                {t('landing.hero.ctaPrimary')} <ArrowRight className="h-4.5 w-4.5" />
               </Link>
               <Link
                 to="/dashboard"
                 className="inline-flex items-center gap-2 rounded-full border border-white/20 px-7 py-3.5 font-semibold transition hover:bg-white/10"
               >
-                {hero.ctaSecondary}
+                {t('landing.hero.ctaSecondary')}
               </Link>
             </div>
             <div className="mt-10 flex items-center gap-6 text-sm text-secondary-foreground/60">
-              <span className="inline-flex items-center gap-2"><Heart className="h-4 w-4 text-primary" /> {hero.proofPoints[0]}</span>
-              <span className="inline-flex items-center gap-2"><TrendingUp className="h-4 w-4 text-primary" /> {hero.proofPoints[1]}</span>
+              <span className="inline-flex items-center gap-2"><Heart className="h-4 w-4 text-primary" /> {t('landing.hero.proof1')}</span>
+              <span className="inline-flex items-center gap-2"><TrendingUp className="h-4 w-4 text-primary" /> {t('landing.hero.proof2')}</span>
             </div>
           </div>
           <div className="relative">
             <div className="overflow-hidden rounded-3xl border border-white/10 shadow-2xl">
-              <img src={heroImg} alt={hero.imageAlt} className="h-full w-full object-cover" />
+              <img src={heroImg} alt={t('landing.hero.imageAlt')} className="h-full w-full object-cover" />
             </div>
             <div className="absolute -bottom-5 -left-5 rounded-2xl border border-border bg-card p-4 text-foreground shadow-xl">
               <div className="flex items-center gap-3">
@@ -63,8 +71,8 @@ export default function Landing() {
                   <Handshake className="h-5.5 w-5.5" />
                 </div>
                 <div>
-                  <div className="text-2xl font-bold leading-none">{hero.statCard.value}</div>
-                  <div className="mt-1 text-xs font-medium text-muted-foreground">{hero.statCard.label}</div>
+                  <div className="text-2xl font-bold leading-none">{t('landing.hero.statValue')}</div>
+                  <div className="mt-1 text-xs font-medium text-muted-foreground">{t('landing.hero.statLabel')}</div>
                 </div>
               </div>
             </div>
@@ -76,17 +84,17 @@ export default function Landing() {
       <section className="border-b border-border bg-card">
         <div className="mx-auto max-w-7xl px-4 pt-16 sm:px-6 lg:pt-20">
           <div className="max-w-2xl">
-            <div className="text-xs font-bold uppercase tracking-widest text-primary">{mission.eyebrow}</div>
+            <div className="text-xs font-bold uppercase tracking-widest text-primary">{t('landing.mission.eyebrow')}</div>
             <h2 className="mt-3 font-display text-4xl font-semibold tracking-tight text-balance sm:text-5xl">
-              {mission.heading}
+              {t('landing.mission.heading')}
             </h2>
             <p className="mt-4 text-lg leading-relaxed text-muted-foreground">
-              {mission.intro}
+              {t('landing.mission.intro')}
             </p>
           </div>
         </div>
         <div className="mx-auto mt-10 grid max-w-7xl grid-cols-2 gap-px overflow-hidden lg:grid-cols-4">
-          {mission.stats.map((s) => (
+          {stats.map((s) => (
             <div key={s.value} className="px-6 py-10 text-center">
               <div className="font-display text-4xl font-semibold text-primary sm:text-5xl">{s.value}</div>
               <p className="mx-auto mt-2 max-w-[220px] text-sm leading-snug text-muted-foreground">{s.label}</p>
@@ -94,7 +102,7 @@ export default function Landing() {
           ))}
         </div>
         <p className="mx-auto max-w-7xl px-4 pb-6 text-center text-xs text-muted-foreground sm:px-6">
-          {mission.footnote}
+          {t('landing.mission.footnote')}
         </p>
       </section>
 
@@ -102,13 +110,13 @@ export default function Landing() {
       <section className="border-b border-border bg-background">
         <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:py-20">
           <div className="max-w-2xl">
-            <div className="text-xs font-bold uppercase tracking-widest text-primary">{trust.promiseTitle}</div>
+            <div className="text-xs font-bold uppercase tracking-widest text-primary">{t('landing.trust.eyebrow')}</div>
             <h2 className="mt-3 font-display text-3xl font-semibold tracking-tight text-balance sm:text-4xl">
-              People tell institutions what feels safe. They tell us the truth.
+              {t('landing.trust.heading')}
             </h2>
           </div>
           <div className="mt-10 grid gap-5 md:grid-cols-3">
-            {trust.promises.map((p) => (
+            {promises.map((p) => (
               <div key={p.title} className="rounded-3xl border border-border bg-card p-6 shadow-sm">
                 <div className="grid h-11 w-11 place-items-center rounded-2xl bg-emerald-100 text-emerald-700">
                   <ShieldCheck className="h-5.5 w-5.5" />
@@ -166,45 +174,48 @@ export default function Landing() {
       <section className="border-y border-border bg-card">
         <div className="mx-auto grid max-w-7xl gap-12 px-4 py-20 sm:px-6 lg:grid-cols-2 lg:items-center lg:py-28">
           <div>
-            <div className="text-xs font-bold uppercase tracking-widest text-primary">{teachLearn.eyebrow}</div>
+            <div className="text-xs font-bold uppercase tracking-widest text-primary">{t('landing.teach.eyebrow')}</div>
             <h2 className="mt-3 font-display text-4xl font-semibold tracking-tight text-balance sm:text-5xl">
-              {teachLearn.heading}
+              {t('landing.teach.heading')}
             </h2>
             <p className="mt-4 text-lg leading-relaxed text-muted-foreground">
-              {teachLearn.body}
+              {t('landing.teach.body')}
             </p>
             <Link to="/exchange" className="mt-6 inline-flex items-center gap-2 font-semibold text-primary hover:gap-3 transition-all">
-              {teachLearn.cta} <ArrowRight className="h-4.5 w-4.5" />
+              {t('landing.teach.cta')} <ArrowRight className="h-4.5 w-4.5" />
             </Link>
           </div>
           <div className="space-y-4">
             <div className="grid items-center gap-3 sm:grid-cols-[1fr_auto_1fr]">
               <div className="rounded-2xl border border-primary/20 bg-primary/5 p-5">
                 <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-primary">
-                  <Languages className="h-4 w-4" /> {teachLearn.example.talentName} teaches
+                  <Languages className="h-4 w-4" /> {t('landing.teach.talentLabel')}
                 </div>
-                <p className="mt-2 text-sm font-medium leading-snug">{teachLearn.example.talentTeaches}</p>
+                <p className="mt-2 text-sm font-medium leading-snug">{t('landing.teach.talentTeaches')}</p>
               </div>
               <div className="mx-auto grid h-10 w-10 place-items-center rounded-full bg-secondary text-secondary-foreground">
                 <ArrowRightLeft className="h-4.5 w-4.5" />
               </div>
               <div className="rounded-2xl border border-accent/20 bg-accent/5 p-5">
                 <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-accent">
-                  <Building2 className="h-4 w-4" /> {teachLearn.example.recruiterName} teaches
+                  <Building2 className="h-4 w-4" /> {t('landing.teach.recruiterLabel')}
                 </div>
-                <p className="mt-2 text-sm font-medium leading-snug">{teachLearn.example.recruiterTeaches}</p>
+                <p className="mt-2 text-sm font-medium leading-snug">{t('landing.teach.recruiterTeaches')}</p>
               </div>
             </div>
             <div className="grid gap-3 sm:grid-cols-3">
-              {teachLearn.cards.map((c) => (
+              {teachCards.map((c, i) => {
+                const Icon = TEACH_ICONS[i] ?? Trophy
+                return (
                 <div key={c.title} className="rounded-2xl border border-border bg-background p-4">
                   <div className="grid h-9 w-9 place-items-center rounded-xl bg-primary/10 text-primary">
-                    <c.icon className="h-4.5 w-4.5" />
+                    <Icon className="h-4.5 w-4.5" />
                   </div>
                   <div className="mt-2.5 text-sm font-bold">{c.title}</div>
                   <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{c.text}</p>
                 </div>
-              ))}
+                )
+              })}
             </div>
           </div>
         </div>
@@ -216,10 +227,10 @@ export default function Landing() {
         <div className="mx-auto max-w-4xl px-4 text-center sm:px-6">
           <Quote className="mx-auto h-10 w-10 text-primary" />
           <blockquote className="mt-6 font-display text-3xl font-medium leading-snug text-balance sm:text-5xl">
-            “{quote.before} <span className="text-primary">{quote.highlight}</span>{quote.after}”
+            “{t('landing.quote.before')} <span className="text-primary">{t('landing.quote.highlight')}</span>{t('landing.quote.after')}”
           </blockquote>
           <p className="mt-6 text-sm font-semibold uppercase tracking-widest text-secondary-foreground/60">
-            {quote.attribution}
+            {t('landing.quote.attribution')}
           </p>
         </div>
       </section>
@@ -228,27 +239,30 @@ export default function Landing() {
       <section className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:py-28">
         <div className="grid gap-12 lg:grid-cols-[1fr_1.4fr] lg:items-start">
           <div>
-            <div className="text-xs font-bold uppercase tracking-widest text-primary">{values.eyebrow}</div>
+            <div className="text-xs font-bold uppercase tracking-widest text-primary">{t('landing.values.eyebrow')}</div>
             <h2 className="mt-3 font-display text-4xl font-semibold tracking-tight text-balance">
-              {values.heading}
+              {t('landing.values.heading')}
             </h2>
             <p className="mt-4 text-lg leading-relaxed text-muted-foreground">
-              {values.intro}
+              {t('landing.values.intro')}
             </p>
             <Link to="/discover" className="mt-6 inline-flex items-center gap-2 font-semibold text-primary hover:gap-3 transition-all">
-              {values.cta} <ArrowRight className="h-4.5 w-4.5" />
+              {t('landing.values.cta')} <ArrowRight className="h-4.5 w-4.5" />
             </Link>
           </div>
           <div className="grid gap-5 sm:grid-cols-3">
-            {values.items.map((v) => (
+            {valueItems.map((v, i) => {
+              const Icon = VALUE_ICONS[i] ?? Flame
+              return (
               <div key={v.title} className="rounded-3xl border border-border bg-card p-6 shadow-sm">
                 <div className="grid h-11 w-11 place-items-center rounded-2xl bg-accent/10 text-accent">
-                  <v.icon className="h-5.5 w-5.5" />
+                  <Icon className="h-5.5 w-5.5" />
                 </div>
                 <h3 className="mt-4 font-display text-lg font-semibold">{v.title}</h3>
                 <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{v.text}</p>
               </div>
-            ))}
+              )
+            })}
           </div>
         </div>
       </section>
@@ -257,16 +271,16 @@ export default function Landing() {
       <section className="border-t border-border bg-card">
         <div className="mx-auto grid max-w-7xl gap-12 px-4 py-20 sm:px-6 lg:grid-cols-2 lg:items-center lg:py-28">
           <div>
-            <div className="text-xs font-bold uppercase tracking-widest text-primary">{retention.eyebrow}</div>
+            <div className="text-xs font-bold uppercase tracking-widest text-primary">{t('landing.retention.eyebrow')}</div>
             <h2 className="mt-3 font-display text-4xl font-semibold tracking-tight text-balance">
-              {retention.heading}
+              {t('landing.retention.heading')}
             </h2>
             <p className="mt-4 text-lg leading-relaxed text-muted-foreground">
-              {retention.intro}
+              {t('landing.retention.intro')}
             </p>
           </div>
           <div className="space-y-4">
-            {retention.items.map((item) => (
+            {retentionItems.map((item) => (
               <div key={item.k} className="flex gap-4 rounded-2xl border border-border bg-background p-5">
                 <div className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full bg-primary" />
                 <div>
@@ -284,17 +298,17 @@ export default function Landing() {
         <div className="mx-auto flex max-w-7xl flex-col items-start justify-between gap-8 px-4 sm:px-6 md:flex-row md:items-center">
           <div>
             <h2 className="font-display text-3xl font-semibold tracking-tight text-balance sm:text-4xl">
-              {cta.heading}
+              {t('landing.cta.heading')}
             </h2>
             <p className="mt-2 text-primary-foreground/85">
-              {cta.sub}
+              {t('landing.cta.sub')}
             </p>
           </div>
           <Link
             to="/discover"
             className="inline-flex items-center gap-2 rounded-full bg-secondary px-8 py-4 font-semibold text-secondary-foreground shadow-xl transition hover:brightness-110"
           >
-            {cta.button} <ArrowRight className="h-4.5 w-4.5" />
+            {t('landing.cta.button')} <ArrowRight className="h-4.5 w-4.5" />
           </Link>
         </div>
       </section>
