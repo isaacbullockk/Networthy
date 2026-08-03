@@ -6,6 +6,7 @@ import { getDb } from "../queries/connection";
 import { users } from "@db/schema";
 import { and, eq, isNull } from "drizzle-orm";
 import { hashPassword } from "../lib/password";
+import { sendAssessorInvite, sendRecruiterApproved } from "../lib/email";
 
 function publicUser(u: typeof users.$inferSelect) {
   const { passwordHash: _pw, ...rest } = u;
@@ -30,6 +31,7 @@ export const adminRouter = createRouter({
       if (!user || user.role !== "recruiter")
         throw new TRPCError({ code: "NOT_FOUND", message: "Recruiter not found" });
       await db.update(users).set({ approvedAt: new Date() }).where(eq(users.id, input.userId));
+      sendRecruiterApproved(user.email, user.name, user.locale);
       return { ok: true };
     }),
 
@@ -54,6 +56,7 @@ export const adminRouter = createRouter({
         role: "assessor",
         approvedAt: new Date(),
       });
+      sendAssessorInvite(email, input.name, input.password, null);
       return { ok: true };
     }),
 });

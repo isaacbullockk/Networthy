@@ -31,8 +31,33 @@ In the service → **Variables**, add:
 | `DATABASE_URL` | `mysql://user:password@host:port/database` (see step 4)      |
 | `APP_ID`       | any non-empty value, e.g. `networthy`                        |
 | `APP_SECRET`   | any non-empty secret                                         |
+| `APP_ORIGIN`   | `https://networthy.nl` — used to build links in emails       |
 
 `PORT` is injected by Railway automatically; the server reads it.
+
+### Email (Resend)
+
+Password resets, recruiter-application alerts, approval mails and assessor
+invites are sent through [Resend](https://resend.com). Without a key the app
+still works — emails are written to the server log instead of sent.
+
+| Variable            | Value                                                        |
+| ------------------- | ------------------------------------------------------------ |
+| `RESEND_API_KEY`    | `re_…` from Resend → API Keys                                |
+| `EMAIL_FROM`        | `NetWorthy <no-reply@networthy.nl>` (default)                |
+| `ADMIN_ALERT_EMAIL` | where new-recruiter alerts go (default `isaac@networthy.app`)|
+
+One-time domain setup so mail from `networthy.nl` doesn't land in spam:
+
+1. Resend → **Domains** → **Add domain** → `networthy.nl`.
+2. Resend shows DNS records (DKIM TXT + SPF MX/TXT) — add them in Namecheap →
+   **Advanced DNS** exactly as shown, then click **Verify** in Resend.
+3. (If you later add MX records for receiving mail on `@networthy.nl`,
+   remember the apex record for Railway should be **ALIAS**, not CNAME — a
+   CNAME on `@` blocks MX.)
+
+Sending works in the user's own language (EN/NL/AR), driven by the locale
+saved on their account.
 
 ## 4. Database
 

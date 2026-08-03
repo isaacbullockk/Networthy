@@ -60,6 +60,21 @@ export const sessions = mysqlTable(
   (t) => ({ tokenIdx: index("token_idx").on(t.token) })
 );
 
+/** One-time password reset tokens — only the sha256 hash is stored.
+ *  Valid for 1 hour, single use, all sessions revoked on reset. */
+export const passwordResets = mysqlTable(
+  "password_resets",
+  {
+    id: serial("id").primaryKey(),
+    userId: bigint("user_id", { mode: "number", unsigned: true }).notNull(),
+    tokenHash: varchar("token_hash", { length: 64 }).notNull(),
+    expiresAt: timestamp("expires_at").notNull(),
+    usedAt: timestamp("used_at"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (t) => ({ hashIdx: index("reset_hash_idx").on(t.tokenHash) })
+);
+
 /* ---------- Talent profiles ---------- */
 
 export const talents = mysqlTable("talents", {

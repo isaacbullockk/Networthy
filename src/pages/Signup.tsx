@@ -4,6 +4,7 @@ import { Sparkles, ArrowRight, AlertCircle, GraduationCap, Building2, ShieldChec
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/lib/auth'
 import { brand } from '@/config/poolContent'
+import PasswordInput from '@/components/PasswordInput'
 
 type Role = 'talent' | 'recruiter'
 
@@ -122,11 +123,11 @@ export default function Signup() {
             )}
             <div>
               <label className="text-sm font-semibold">{t('auth.password')}</label>
-              <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder={t('auth.signup.passwordPh')} autoComplete="new-password" className={inputCls} />
+              <PasswordInput value={password} onChange={(e) => setPassword(e.target.value)} placeholder={t('auth.signup.passwordPh')} autoComplete="new-password" className={inputCls} />
             </div>
             <div>
               <label className="text-sm font-semibold">{t('auth.signup.repeat')}</label>
-              <input type="password" value={confirm} onChange={(e) => setConfirm(e.target.value)} placeholder={t('auth.signup.repeatPh')} autoComplete="new-password" className={inputCls} />
+              <PasswordInput value={confirm} onChange={(e) => setConfirm(e.target.value)} placeholder={t('auth.signup.repeatPh')} autoComplete="new-password" className={inputCls} />
             </div>
           </div>
 

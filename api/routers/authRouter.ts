@@ -1,14 +1,17 @@
 import { z } from "zod";
-import { randomBytes } from "node:crypto";
+import { createHash, randomBytes } from "node:crypto";
 import { TRPCError } from "@trpc/server";
 import { createRouter, publicQuery } from "../middleware";
 import { authedQuery, recruiterQuery } from "../auth";
 import { getDb } from "../queries/connection";
-import { sessions, talents, users } from "@db/schema";
-import { and, eq } from "drizzle-orm";
+import { passwordResets, sessions, talents, users } from "@db/schema";
+import { and, eq, isNull } from "drizzle-orm";
 import { COOKIE_NAME } from "../context";
 import { hashPassword, verifyPassword } from "../lib/password";
 import { rateLimit, clientIp } from "../lib/rateLimit";
+import { sendAdminRecruiterApplied, sendPasswordReset } from "../lib/email";
+
+const sha256 = (s: string) => createHash("sha256").update(s).digest("hex");
 
 const THIRTY_DAYS = 30 * 24 * 60 * 60 * 1000;
 const isProd = process.env.NODE_ENV === "production";
@@ -123,7 +126,76 @@ export const authRouter = createRouter({
       const user = await db.query.users.findFirst({ where: eq(users.id, userId) });
       const token = await createSession(userId);
       ctx.resHeaders.set("set-cookie", sessionCookie(token, THIRTY_DAYS / 1000));
+      // A recruiter just entered the trust gate — alert the admin
+      if (input.role === "recruiter") {
+        sendAdminRecruiterApplied(input.name, input.company ?? null, email);
+      }
       return publicUser(user!);
+    }),
+
+  /**
+   * Password reset, step 1: always answers ok (never reveals whether an
+   * account exists). Token is emailed; only its sha256 hash is stored.
+   */
+  forgotPassword: publicQuery
+    .input(z.object({ email: z.string().email().max(320) }))
+    .mutation(async ({ ctx, input }) => {
+      const email = input.email.toLowerCase().trim();
+      const ip = clientIp(ctx.req);
+      if (!rateLimit(`forgot:${ip}:${email}`, 5, 15 * 60_000)) {
+        throw new TRPCError({
+          code: "TOO_MANY_REQUESTS",
+          message: "Too many reset requests — try again later",
+        });
+      }
+      const db = getDb();
+      const user = await db.query.users.findFirst({ where: eq(users.email, email) });
+      if (user) {
+        const token = randomBytes(32).toString("hex");
+        await db.delete(passwordResets).where(eq(passwordResets.userId, user.id));
+        await db.insert(passwordResets).values({
+          userId: user.id,
+          tokenHash: sha256(token),
+          expiresAt: new Date(Date.now() + 60 * 60_000),
+        });
+        sendPasswordReset(user.email, user.name, token, user.locale);
+      }
+      return { ok: true };
+    }),
+
+  /**
+   * Password reset, step 2: single use, 1-hour validity, all existing
+   * sessions revoked so the old password can't stay logged in anywhere.
+   */
+  resetPassword: publicQuery
+    .input(
+      z.object({
+        token: z.string().min(32).max(128),
+        password: z
+          .string()
+          .min(10, "Use at least 10 characters")
+          .max(200)
+          .refine((p) => /[a-zA-Z]/.test(p) && /[0-9]/.test(p), "Include letters and numbers"),
+      })
+    )
+    .mutation(async ({ input }) => {
+      const db = getDb();
+      const row = await db.query.passwordResets.findFirst({
+        where: and(eq(passwordResets.tokenHash, sha256(input.token)), isNull(passwordResets.usedAt)),
+      });
+      if (!row || row.expiresAt.getTime() < Date.now()) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Reset link is invalid or expired" });
+      }
+      await db
+        .update(users)
+        .set({ passwordHash: hashPassword(input.password) })
+        .where(eq(users.id, row.userId));
+      await db
+        .update(passwordResets)
+        .set({ usedAt: new Date() })
+        .where(eq(passwordResets.id, row.id));
+      await db.delete(sessions).where(eq(sessions.userId, row.userId));
+      return { ok: true };
     }),
 
   /**

@@ -57,6 +57,13 @@
       "when": 1785680753386,
       "tag": "0007_curvy_victor_mancha",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "5",
+      "when": 1785750130284,
+      "tag": "0008_typical_fallen_one",
+      "breakpoints": true
     }
   ]
 }

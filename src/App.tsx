@@ -6,6 +6,8 @@ import Layout from '@/components/Layout'
 import Landing from '@/pages/Landing'
 import Login from '@/pages/Login'
 import Signup from '@/pages/Signup'
+import ForgotPassword from '@/pages/ForgotPassword'
+import ResetPassword from '@/pages/ResetPassword'
 import Discover from '@/pages/Discover'
 import TalentProfile from '@/pages/TalentProfile'
 import VideoCall from '@/pages/VideoCall'
@@ -80,6 +82,8 @@ function AppRoutes() {
     <Routes>
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<Signup />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
       <Route element={<Layout />}>
         <Route path="/" element={<Landing />} />
         {/* Recruiter routes */}
