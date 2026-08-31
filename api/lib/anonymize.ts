@@ -29,19 +29,28 @@ export function revealTalent(t: Talent): PoolTalent {
   return { ...t, anonymized: false };
 }
 
-/** Talent ids this recruiter is already connected with → identity revealed. */
+/** Identity unlocks only when the talent has ACCEPTED the connection. */
+export function consentUnlocksIdentity(consent: string | null | undefined): boolean {
+  return consent === "accepted";
+}
+
+/** Talent ids this recruiter may see unmasked → accepted matches only. */
 export async function unlockedTalentIds(recruiterId: number): Promise<Set<number>> {
   const rows = await getDb().query.matches.findMany({
-    where: eq(matches.recruiterId, recruiterId),
+    where: and(eq(matches.recruiterId, recruiterId), eq(matches.talentConsent, "accepted")),
     columns: { talentId: true },
   });
   return new Set(rows.map((r) => r.talentId));
 }
 
-/** Does a match exist between this recruiter and this talent? */
+/** Does an ACCEPTED match exist between this recruiter and this talent? */
 export async function hasMatch(recruiterId: number, talentId: number): Promise<boolean> {
   const row = await getDb().query.matches.findFirst({
-    where: and(eq(matches.recruiterId, recruiterId), eq(matches.talentId, talentId)),
+    where: and(
+      eq(matches.recruiterId, recruiterId),
+      eq(matches.talentId, talentId),
+      eq(matches.talentConsent, "accepted")
+    ),
     columns: { id: true },
   });
   return !!row;

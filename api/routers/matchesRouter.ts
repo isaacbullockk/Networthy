@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { createRouter } from "../middleware";
-import { authedQuery, recruiterQuery } from "../auth";
+import { authedQuery, recruiterQuery, talentQuery } from "../auth";
 import { getDb } from "../queries/connection";
 import { matches, talents } from "@db/schema";
 import { and, eq } from "drizzle-orm";
@@ -22,6 +22,7 @@ export const matchesRouter = createRouter({
     return db.query.matches.findMany({ where: eq(matches.talentId, ctx.user.talentId) });
   }),
 
+  /** Recruiter requests a connection. Identity stays locked until the talent accepts. */
   create: recruiterQuery
     .input(z.object({ talentId: z.number(), role: z.string().min(1) }))
     .mutation(async ({ ctx, input }) => {
@@ -29,7 +30,13 @@ export const matchesRouter = createRouter({
       const existing = await db.query.matches.findFirst({
         where: and(eq(matches.talentId, input.talentId), eq(matches.recruiterId, ctx.user.id)),
       });
-      if (existing) return existing;
+      if (existing) {
+        // A declined request stays declined — no re-request spam.
+        if (existing.talentConsent === "declined") {
+          throw new TRPCError({ code: "FORBIDDEN", message: "This talent has declined the connection." });
+        }
+        return existing;
+      }
       const talent = await db.query.talents.findFirst({
         where: eq(talents.id, input.talentId),
       });
@@ -41,10 +48,34 @@ export const matchesRouter = createRouter({
           company: ctx.user.company ?? "Your company",
           role: input.role || talent?.role || "Open role",
           stage: "connected",
+          talentConsent: "pending",
           lastActivity: today(),
         })
         .$returningId();
       return db.query.matches.findFirst({ where: eq(matches.id, id) });
+    }),
+
+  /** Talent accepts or declines a connection request. Identity unlocks only on accept. */
+  respond: talentQuery
+    .input(z.object({ id: z.number(), accept: z.boolean() }))
+    .mutation(async ({ ctx, input }) => {
+      const db = getDb();
+      const match = await db.query.matches.findFirst({ where: eq(matches.id, input.id) });
+      if (!match) throw new TRPCError({ code: "NOT_FOUND" });
+      if (!ctx.user.talentId || match.talentId !== ctx.user.talentId) {
+        throw new TRPCError({ code: "FORBIDDEN" });
+      }
+      if (match.talentConsent !== "pending") {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "This request was already answered." });
+      }
+      await db
+        .update(matches)
+        .set({
+          talentConsent: input.accept ? "accepted" : "declined",
+          lastActivity: today(),
+        })
+        .where(eq(matches.id, input.id));
+      return db.query.matches.findFirst({ where: eq(matches.id, input.id) });
     }),
 
   update: recruiterQuery
@@ -61,6 +92,10 @@ export const matchesRouter = createRouter({
       const match = await db.query.matches.findFirst({ where: eq(matches.id, input.id) });
       if (!match) throw new TRPCError({ code: "NOT_FOUND" });
       if (match.recruiterId !== ctx.user.id) throw new TRPCError({ code: "FORBIDDEN" });
+      // The journey only moves once the talent has said yes.
+      if (match.talentConsent !== "accepted") {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Waiting for the talent to accept the connection." });
+      }
       const { id, ...patch } = input;
       // Entering 'hired' starts the 90-day retention journey
       const hiredAt =

@@ -21,7 +21,10 @@ const FUNNEL_COLORS = [
 const ORDER: PipelineStage[] = ['connected', 'video_chat', 'questionnaire', 'in_house', 'hired', 'retained']
 
 export default function Dashboard() {
-  const { matches, updateMatch } = useApp()
+  const { matches: allMatches, updateMatch } = useApp()
+  // Consent-first: pending/declined requests are not pipeline activity
+  const matches = allMatches.filter((m) => m.talentConsent === 'accepted')
+  const awaitingConsent = allMatches.filter((m) => m.talentConsent === 'pending').length
   const { data: talents } = trpc.talents.list.useQuery()
   const { data: stats } = trpc.exchanges.stats.useQuery()
   const { data: exchanges } = trpc.exchanges.list.useQuery()
@@ -119,6 +122,11 @@ export default function Dashboard() {
         <p className="mt-1 text-sm text-muted-foreground">
           Cumulative matches per stage — each step deepens the connection before anyone commits.
         </p>
+        {awaitingConsent > 0 && (
+          <p className="mt-3 inline-flex items-center gap-2 rounded-full bg-amber-50 px-4 py-1.5 text-xs font-semibold text-amber-700">
+            {awaitingConsent} connection request{awaitingConsent === 1 ? '' : 's'} awaiting the talent's response — identity unlocks only after they accept.
+          </p>
+        )}
         <div className="mt-7 space-y-3.5">
           {counts.map((c, i) => (
             <div key={c.key} className="flex items-center gap-4">

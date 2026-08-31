@@ -118,6 +118,10 @@ export const matches = mysqlTable(
     ])
       .notNull()
       .default("connected"),
+    /** Talent consent: identity stays locked until the talent accepts the connection */
+    talentConsent: mysqlEnum("talent_consent", ["pending", "accepted", "declined"])
+      .notNull()
+      .default("pending"),
     connectionRating: int("connection_rating").notNull().default(0),
     notes: text("notes"),
     lastActivity: varchar("last_activity", { length: 10 }).notNull(),

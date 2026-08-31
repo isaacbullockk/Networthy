@@ -24,6 +24,11 @@ export default function PortalHome() {
   const approveMut = trpc.assessments.approve.useMutation({ onSuccess: () => utils.assessments.mine.invalidate() })
   const declineMut = trpc.assessments.decline.useMutation({ onSuccess: () => utils.assessments.mine.invalidate() })
   const { data: retentionPending } = trpc.retention.pending.useQuery()
+  const respondMut = trpc.matches.respond.useMutation({
+    onSuccess: () => utils.matches.list.invalidate(),
+  })
+  const pendingRequests = matches.filter((m) => m.talentConsent === 'pending')
+  const activeMatches = matches.filter((m) => m.talentConsent === 'accepted')
   const pendingAssessments = (myAssessments ?? []).filter((a) => a.assessment.status === 'pending_approval')
   const publishedAssessments = (myAssessments ?? []).filter((a) => a.assessment.status === 'published')
 
@@ -51,7 +56,7 @@ export default function PortalHome() {
       </div>
 
       {/* My NetWorthy Record — the earned CV */}
-      {matches.filter((m) => stageIndex(m.stage) >= stageIndex('in_house')).map((m) => (
+      {activeMatches.filter((m) => stageIndex(m.stage) >= stageIndex('in_house')).map((m) => (
         <Link
           key={`rec-${m.id}`}
           to={`/record/${m.id}`}
@@ -71,7 +76,7 @@ export default function PortalHome() {
       ))}
 
       {/* My first 90 days — retention mode */}
-      {matches.filter((m) => m.stage === 'hired' || m.stage === 'retained').map((m) => {
+      {activeMatches.filter((m) => m.stage === 'hired' || m.stage === 'retained').map((m) => {
         const pend = retentionPending?.find((p) => p.matchId === m.id)
         const day = m.hiredAt ? Math.min(90, Math.floor((Date.now() - new Date(m.hiredAt).getTime()) / 86400000)) : 0
         return (
@@ -263,16 +268,56 @@ export default function PortalHome() {
         </div>
       )}
 
-      {/* Matches / journey */}
+      {/* Connection requests — the talent decides who sees their identity */}
+      {pendingRequests.length > 0 && (
+        <div className="mt-12">
+          <h2 className="font-display text-2xl font-semibold">{t('portal.home.requests')}</h2>
+          <div className="mt-5 space-y-4">
+            {pendingRequests.map((m) => (
+              <div key={m.id} className="rounded-3xl border border-primary/30 bg-primary/5 p-5 shadow-sm sm:p-6">
+                <div className="flex flex-wrap items-center gap-4">
+                  <div className="grid h-14 w-14 place-items-center rounded-2xl bg-secondary font-display text-xl font-semibold text-secondary-foreground">
+                    {m.company.slice(0, 2)}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="font-display text-lg font-semibold">{m.company}</div>
+                    <div className="mt-0.5 text-sm text-muted-foreground">
+                      <strong className="text-foreground">{m.company}</strong> {t('portal.home.requestBody')}
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => respondMut.mutate({ id: m.id, accept: true })}
+                      disabled={respondMut.isPending}
+                      className="inline-flex items-center gap-1.5 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground transition hover:brightness-110 disabled:opacity-50"
+                    >
+                      <Check className="h-4 w-4" /> {t('portal.home.accept')}
+                    </button>
+                    <button
+                      onClick={() => respondMut.mutate({ id: m.id, accept: false })}
+                      disabled={respondMut.isPending}
+                      className="inline-flex items-center gap-1.5 rounded-full border border-border px-5 py-2.5 text-sm font-semibold transition hover:bg-muted disabled:opacity-50"
+                    >
+                      <X className="h-4 w-4" /> {t('portal.home.decline')}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Matches / journey — accepted connections only */}
       <div className="mt-12">
         <h2 className="font-display text-2xl font-semibold">{t('portal.home.companies')}</h2>
         <div className="mt-5 space-y-4">
-          {matches.length === 0 && (
+          {activeMatches.length === 0 && (
             <div className="rounded-3xl border border-dashed border-border p-14 text-center text-muted-foreground">
               {t('portal.home.noMatches')}
             </div>
           )}
-          {matches.map((m) => (
+          {activeMatches.map((m) => (
             <div key={m.id} className="rounded-3xl border border-border bg-card p-5 shadow-sm sm:p-6">
               <div className="flex flex-wrap items-center gap-4">
                 <div className="grid h-14 w-14 place-items-center rounded-2xl bg-secondary font-display text-xl font-semibold text-secondary-foreground">

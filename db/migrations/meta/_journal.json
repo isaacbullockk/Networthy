@@ -71,6 +71,13 @@
       "when": 1788190893917,
       "tag": "0009_vacancies",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "5",
+      "when": 1788193365843,
+      "tag": "0010_talent_consent",
+      "breakpoints": true
     }
   ]
 }
