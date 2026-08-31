@@ -35,8 +35,8 @@ const TALENTS: Omit<schema.Talent, "id" | "createdAt">[] = [
     ],
     lookingFor: "A product team where I can ship features end-to-end and keep mentoring.",
     availability: "Available from next month · 36–40 hrs",
-    videoIntroSec: 94, gradient: "from-orange-400 to-rose-500", matchScore: 94,
-    matchReasons: ["Strong ownership fits your scale-up culture", 'Mentoring matches your team value "grow together"', "Frontend skills match 2 open roles"],
+    videoIntroSec: 94, gradient: "from-orange-400 to-rose-500", matchScore: 0,
+    matchReasons: [],
   },
   {
     name: "Bereket Tesfay", role: "Chef & Kitchen Lead", origin: "Eritrea", yearsInNL: 8,
@@ -53,8 +53,8 @@ const TALENTS: Omit<schema.Talent, "id" | "createdAt">[] = [
     ],
     lookingFor: "A head-chef or kitchen-lead role in a restaurant or catering company.",
     availability: "Available immediately · fulltime",
-    videoIntroSec: 71, gradient: "from-amber-400 to-orange-600", matchScore: 91,
-    matchReasons: ["Leadership style fits your hospitality group", "HACCP certified — matches your compliance needs", "Thrives in high-pressure service like your venues"],
+    videoIntroSec: 71, gradient: "from-amber-400 to-orange-600", matchScore: 0,
+    matchReasons: [],
   },
   {
     name: "Olena Kovalenko", role: "Financial Analyst", origin: "Ukraine", yearsInNL: 3,
@@ -71,8 +71,8 @@ const TALENTS: Omit<schema.Talent, "id" | "createdAt">[] = [
     ],
     lookingFor: "A (junior-)medior analyst role in banking, fintech or a corporate finance team.",
     availability: "Available in 2 weeks · 32–40 hrs",
-    videoIntroSec: 82, gradient: "from-sky-400 to-indigo-600", matchScore: 89,
-    matchReasons: ["Risk background fits your fintech compliance team", "Power BI matches your reporting stack", 'Known for steadiness — matches your "calm hands" culture'],
+    videoIntroSec: 82, gradient: "from-sky-400 to-indigo-600", matchScore: 0,
+    matchReasons: [],
   },
   {
     name: "Yusuf Abdi", role: "Logistics Coordinator", origin: "Somalia", yearsInNL: 9,
@@ -89,8 +89,8 @@ const TALENTS: Omit<schema.Talent, "id" | "createdAt">[] = [
     ],
     lookingFor: "A coordinator or planner role in logistics, e-commerce or distribution.",
     availability: "Available immediately · fulltime, shifts OK",
-    videoIntroSec: 66, gradient: "from-emerald-400 to-teal-600", matchScore: 92,
-    matchReasons: ["Improvisation fits your fast-growing fulfilment hub", "WMS experience matches your tooling", "Shift flexibility matches your 24/7 operation"],
+    videoIntroSec: 66, gradient: "from-emerald-400 to-teal-600", matchScore: 0,
+    matchReasons: [],
   },
   {
     name: "Farah Nasser", role: "UX Designer", origin: "Iraq", yearsInNL: 5,
@@ -107,8 +107,8 @@ const TALENTS: Omit<schema.Talent, "id" | "createdAt">[] = [
     ],
     lookingFor: "A UX or service design role, ideally on products with social impact.",
     availability: "Available from next month · 32–40 hrs",
-    videoIntroSec: 88, gradient: "from-violet-400 to-purple-600", matchScore: 87,
-    matchReasons: ["Accessibility expertise matches your gov-tech product", "Research-driven approach fits your design maturity", "Impact motivation matches your mission"],
+    videoIntroSec: 88, gradient: "from-violet-400 to-purple-600", matchScore: 0,
+    matchReasons: [],
   },
   {
     name: "Samuel Okonkwo", role: "Data Engineer", origin: "Nigeria", yearsInNL: 4,
@@ -125,8 +125,8 @@ const TALENTS: Omit<schema.Talent, "id" | "createdAt">[] = [
     ],
     lookingFor: "A data engineering role in retail, logistics or the public sector.",
     availability: "Available in 1 month · 36–40 hrs",
-    videoIntroSec: 59, gradient: "from-cyan-400 to-blue-600", matchScore: 90,
-    matchReasons: ["dbt + Airflow matches your data stack exactly", "Documentation culture matches your team norms", "Retail domain experience is directly relevant"],
+    videoIntroSec: 59, gradient: "from-cyan-400 to-blue-600", matchScore: 0,
+    matchReasons: [],
   },
   {
     name: "Rania Khalil", role: "HR & People Advisor", origin: "Lebanon", yearsInNL: 7,
@@ -143,8 +143,8 @@ const TALENTS: Omit<schema.Talent, "id" | "createdAt">[] = [
     ],
     lookingFor: "An HR advisor, recruiter or DEI-focused people role.",
     availability: "Available immediately · 32–40 hrs",
-    videoIntroSec: 76, gradient: "from-pink-400 to-rose-600", matchScore: 88,
-    matchReasons: ["DEI expertise matches your inclusion goals", "Onboarding design fits your scale-up growing pains", "Four languages match your international team"],
+    videoIntroSec: 76, gradient: "from-pink-400 to-rose-600", matchScore: 0,
+    matchReasons: [],
   },
   {
     name: "Karim Benzari", role: "Mechatronics Technician", origin: "Syria", yearsInNL: 6,
@@ -161,8 +161,8 @@ const TALENTS: Omit<schema.Talent, "id" | "createdAt">[] = [
     ],
     lookingFor: "A technician role in manufacturing, food production or technical services.",
     availability: "Available immediately · fulltime, shifts OK",
-    videoIntroSec: 63, gradient: "from-slate-400 to-slate-700", matchScore: 93,
-    matchReasons: ["PLC + maintenance matches your technical services roles", "Shift flexibility matches your production schedule", "Safety-first mindset matches your floor culture"],
+    videoIntroSec: 63, gradient: "from-slate-400 to-slate-700", matchScore: 0,
+    matchReasons: [],
   },
 ];
 

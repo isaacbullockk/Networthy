@@ -71,9 +71,13 @@ export default function TalentProfile() {
                     <div className="text-lg font-medium text-primary">{talent.role}</div>
                   </div>
                 </div>
-                <div className="flex items-center gap-2 rounded-2xl bg-primary/10 px-4 py-2.5">
-                  <span className="font-display text-2xl font-semibold text-primary">{talent.matchScore}%</span>
-                  <span className="text-xs font-semibold uppercase tracking-wide text-primary/80">match with<br />your roles</span>
+                <div className="flex items-center gap-2 rounded-2xl bg-emerald-50 px-4 py-2.5">
+                  <BadgeCheck className="h-6 w-6 text-emerald-600" />
+                  <span className="text-xs font-semibold uppercase tracking-wide text-emerald-800">
+                    {talent.verifiedCount > 0
+                      ? <>{talent.verifiedSkills.length} skills<br />verified by assessors</>
+                      : <>not yet<br />verified</>}
+                  </span>
                 </div>
               </div>
 
@@ -219,18 +223,25 @@ export default function TalentProfile() {
             </div>
           </div>
 
-          {/* Why this match */}
+          {/* Verified skills — real assessment output, no fabricated match claims */}
           <div className="rounded-3xl border border-border bg-card p-5 shadow-sm sm:p-6">
             <div className="font-display text-lg font-semibold">
-              {anon ? t('anon.whyMatch') : `Why ${firstName} matches you`}
+              {anon ? t('anon.whyMatch') : `${firstName}'s verified skills`}
             </div>
-            <ul className="mt-3 space-y-2.5">
-              {talent.matchReasons.map((r) => (
-                <li key={r} className="flex gap-2.5 text-sm leading-snug text-muted-foreground">
-                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-primary" /> {r}
-                </li>
-              ))}
-            </ul>
+            {talent.verifiedSkills.length > 0 ? (
+              <ul className="mt-3 space-y-2.5">
+                {talent.verifiedSkills.map((s) => (
+                  <li key={s} className="flex gap-2.5 text-sm leading-snug text-muted-foreground">
+                    <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" /> {s}
+                    <span className="text-emerald-700/70">— verified by an assessor</span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="mt-3 text-sm leading-snug text-muted-foreground">
+                No verified skills yet — connect to start an independent assessment.
+              </p>
+            )}
           </div>
 
           {/* Actions */}

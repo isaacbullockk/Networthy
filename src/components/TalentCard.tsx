@@ -23,7 +23,7 @@ function ScoreRing({ score }: { score: number }) {
   )
 }
 
-export default function TalentCard({ talent }: { talent: Talent & { verifiedCount?: number; anonymized?: boolean } }) {
+export default function TalentCard({ talent }: { talent: Omit<Talent, 'matchScore'> & { matchScore: number | null; verifiedCount?: number; anonymized?: boolean } }) {
   const { t } = useTranslation()
   const anon = talent.anonymized === true
   const displayName = anon ? `${t('anon.codename')} #${1000 + talent.id}` : talent.name
@@ -50,10 +50,18 @@ export default function TalentCard({ talent }: { talent: Talent & { verifiedCoun
             <div className="text-sm font-medium text-primary">{talent.role}</div>
           </div>
         </div>
-        <div className="text-center">
-          <ScoreRing score={talent.matchScore} />
-          <div className="mt-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">match</div>
-        </div>
+        {typeof talent.matchScore === 'number' ? (
+          <div className="text-center" title="Share of the skills you're hiring for that this talent has — verified skills weigh heavier">
+            <ScoreRing score={talent.matchScore} />
+            <div className="mt-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">skills</div>
+          </div>
+        ) : (talent.verifiedCount ?? 0) > 0 ? (
+          <div className="flex flex-col items-center gap-0.5 text-center" title="Skills verified by an independent assessor">
+            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-800">
+              <ShieldCheck className="h-3.5 w-3.5" />{talent.verifiedCount} verified
+            </span>
+          </div>
+        ) : null}
       </div>
 
       <p className="mt-4 line-clamp-2 font-display text-[15px] italic leading-snug text-foreground/80">
