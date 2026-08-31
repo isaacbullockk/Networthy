@@ -7,6 +7,7 @@ export const nl = {
   },
   nav: {
     discoverTalent: 'Ontdek talent',
+    vacancies: 'Vacatures',
     questionnaires: 'Vragenlijsten',
     inHouseVisits: 'Inhouse-bezoeken',
     teachLearn: 'Teach & Learn',

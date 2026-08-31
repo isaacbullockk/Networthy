@@ -275,3 +275,23 @@ export type Talent = typeof talents.$inferSelect;
 export type Match = typeof matches.$inferSelect;
 export type Questionnaire = typeof questionnaires.$inferSelect;
 export type Meeting = typeof meetings.$inferSelect;
+
+/* ---------- Vacancies & matching engine ---------- */
+
+export const vacancies = mysqlTable(
+  "vacancies",
+  {
+    id: serial("id").primaryKey(),
+    recruiterId: bigint("recruiter_id", { mode: "number", unsigned: true }).notNull(),
+    title: varchar("title", { length: 255 }).notNull(),
+    requiredSkills: json("required_skills").$type<string[]>().notNull(),
+    niceSkills: json("nice_skills").$type<string[]>().notNull(),
+    languages: json("languages").$type<string[]>().notNull(),
+    availability: varchar("availability", { length: 255 }).notNull(),
+    status: mysqlEnum("status", ["open", "closed"]).notNull().default("open"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (t) => ({ recruiterIdx: index("vacancy_recruiter_idx").on(t.recruiterId) })
+);
+
+export type Vacancy = typeof vacancies.$inferSelect;

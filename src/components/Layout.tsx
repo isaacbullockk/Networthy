@@ -6,6 +6,7 @@ import LanguageSwitcher from '@/components/LanguageSwitcher'
 
 const RECRUITER_NAV = [
   { to: '/discover', key: 'discoverTalent' },
+  { to: '/vacancies', key: 'vacancies' },
   { to: '/questionnaires', key: 'questionnaires' },
   { to: '/meetings', key: 'inHouseVisits' },
   { to: '/exchange', key: 'teachLearn' },

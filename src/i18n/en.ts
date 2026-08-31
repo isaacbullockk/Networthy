@@ -7,6 +7,7 @@ export const en = {
   },
   nav: {
     discoverTalent: 'Discover talent',
+    vacancies: 'Vacancies',
     questionnaires: 'Questionnaires',
     inHouseVisits: 'In-house visits',
     teachLearn: 'Teach & Learn',

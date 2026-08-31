@@ -7,6 +7,7 @@ export const ar = {
   },
   nav: {
     discoverTalent: 'اكتشف المواهب',
+    vacancies: 'الوظائف الشاغرة',
     questionnaires: 'الاستبيانات',
     inHouseVisits: 'زيارات الشركات',
     teachLearn: 'علّم وتعلّم',

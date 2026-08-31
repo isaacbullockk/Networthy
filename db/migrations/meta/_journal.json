@@ -64,6 +64,13 @@
       "when": 1785750130284,
       "tag": "0008_typical_fallen_one",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "5",
+      "when": 1788190893917,
+      "tag": "0009_vacancies",
+      "breakpoints": true
     }
   ]
 }

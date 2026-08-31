@@ -9,6 +9,7 @@ import Signup from '@/pages/Signup'
 import ForgotPassword from '@/pages/ForgotPassword'
 import ResetPassword from '@/pages/ResetPassword'
 import Discover from '@/pages/Discover'
+import Vacancies from '@/pages/Vacancies'
 import TalentProfile from '@/pages/TalentProfile'
 import VideoCall from '@/pages/VideoCall'
 import Questionnaires from '@/pages/Questionnaires'
@@ -88,6 +89,7 @@ function AppRoutes() {
         <Route path="/" element={<Landing />} />
         {/* Recruiter routes */}
         <Route path="/discover" element={<RequireAuth role="recruiter"><Discover /></RequireAuth>} />
+        <Route path="/vacancies" element={<RequireAuth role="recruiter"><Vacancies /></RequireAuth>} />
         <Route path="/talent/:id" element={<RequireAuth role="recruiter"><TalentProfile /></RequireAuth>} />
         <Route path="/questionnaires" element={<RequireAuth role="recruiter"><Questionnaires /></RequireAuth>} />
         <Route path="/meetings" element={<RequireAuth role="recruiter"><Meetings /></RequireAuth>} />
