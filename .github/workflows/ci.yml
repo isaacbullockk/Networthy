@@ -1,0 +1,117 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  # ---------------------------------------------------------------------
+  # GATE — deterministic, blocking. Mirrors the Railway Dockerfile exactly:
+  # if this passes, the Docker build passes. An LLM can never replace this.
+  # ---------------------------------------------------------------------
+  gate:
+    name: Build gate (typecheck + production build)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      # Same self-heal as the Dockerfile: rewrite unreachable internal
+      # mirror URLs in the lockfile to the public registry.
+      - name: Self-heal lockfile registry URLs
+        run: sed -i 's|https://npm\.mirrors\.msh\.team/|https://registry.npmjs.org/|g' package-lock.json
+
+      - name: Install dependencies
+        run: npm ci --include=dev --no-audit --no-fund
+
+      - name: Typecheck (tsc -b)
+        run: npm run check
+
+      - name: Production build (vite + esbuild server bundle)
+        run: npm run build
+
+      - name: Seed script bundles
+        run: |
+          npx esbuild db/seed.ts --platform=node --bundle --format=esm \
+            --outfile=/tmp/seed-check.js \
+            --banner:js="import { createRequire } from 'module';const require = createRequire(import.meta.url);"
+
+      - name: No secrets in the tree
+        run: |
+          if git ls-files | grep -E '(^|/)\.env($|\.)' | grep -v '.env.example'; then
+            echo '::error::A .env file is tracked in git — remove it immediately'
+            exit 1
+          fi
+          if grep -rnE 'ghp_[A-Za-z0-9]{20,}|re_[A-Za-z0-9]{20,}|sk-[A-Za-z0-9]{20,}' \
+              --include='*.ts' --include='*.tsx' --include='*.js' --include='*.py' . \
+              | grep -v node_modules | grep -v dist; then
+            echo '::error::Hardcoded token pattern found in source'
+            exit 1
+          fi
+
+  # ---------------------------------------------------------------------
+  # AI REVIEW — independent second opinion on the diff (Nemotron 3 Ultra
+  # via OpenRouter). Advisory by default: it reports, it does not block.
+  #
+  # The repo owner can make it blocking by setting the repository variable
+  #   AI_REVIEW_STRICT = true   (Settings → Secrets and variables → Variables)
+  # and the secret
+  #   OPENROUTER_API_KEY        (Settings → Secrets and variables → Secrets)
+  # Without the secret this job skips cleanly. Deterministic gate above is
+  # always the authoritative check; this layer exists to catch design-level
+  # drift that compilers cannot see.
+  # ---------------------------------------------------------------------
+  ai-review:
+    name: AI design review (Nemotron via OpenRouter)
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    permissions:
+      pull-requests: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Run AI review
+        id: review
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          OPENROUTER_MODEL: ${{ vars.OPENROUTER_MODEL }}
+          AI_REVIEW_STRICT: ${{ vars.AI_REVIEW_STRICT }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: node scripts/ai-review.mjs
+
+      - name: Upload review report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ai-review
+          path: ai-review.md
+          if-no-files-found: ignore
+
+      - name: Comment review on PR
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            if (!fs.existsSync('ai-review.md')) return;
+            const body = fs.readFileSync('ai-review.md', 'utf8').slice(0, 60000);
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: '🤖 **AI design review (Nemotron 3 Ultra — advisory)**\n\n' + body,
+            });
