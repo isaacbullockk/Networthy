@@ -65,7 +65,7 @@ const LANGUAGE_CANONICAL: Record<string, string[]> = {
   dutch: ["dutch", "nederlands", "الهولندية"],
   english: ["english", "engels", "الإنجليزية", "الانجليزية"],
   arabic: ["arabic", "arabisch", "العربية"],
-  tigrinya: ["tigrinya", "tigrinja", "تغرينية"],
+  tigrinya: ["tigrinya", "tigrinja", "tigrigna", "ትግርኛ", "تغرينية"],
   farsi: ["farsi", "persian", "perzisch", "dari", "الفارسية"],
   french: ["french", "frans", "الفرنسية"],
   german: ["german", "duits", "الألمانية"],

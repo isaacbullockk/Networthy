@@ -71,6 +71,15 @@ describe("matchTalentToVacancy", () => {
     expect(r.breakdown.languages).toBe(15);
   });
 
+  it("Tigrinya matches across spellings and scripts", () => {
+    const r = matchTalentToVacancy(
+      { requiredSkills: [], niceSkills: [], languages: ["Tigrinya"], availability: "" },
+      { skills: [], languages: ["ትግርኛ"], availability: "" },
+      []
+    );
+    expect(r.breakdown.languages).toBe(15);
+  });
+
   it("a vacancy with no demands scores everyone equally", () => {
     const open = { requiredSkills: [], niceSkills: [], languages: [], availability: "" };
     const a = matchTalentToVacancy(open, { skills: [], languages: [], availability: "" }, []);
