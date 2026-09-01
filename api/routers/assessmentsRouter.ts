@@ -3,8 +3,9 @@ import { TRPCError } from "@trpc/server";
 import { createRouter } from "../middleware";
 import { assessorQuery, authedQuery, talentQuery } from "../auth";
 import { getDb } from "../queries/connection";
-import { assessments, users } from "@db/schema";
+import { assessments, talents, users } from "@db/schema";
 import { and, desc, eq } from "drizzle-orm";
+import { embeddingText, getEmbedder } from "../lib/embeddings";
 
 function requireCharter(user: { charterSignedAt: Date | null }) {
   if (!user.charterSignedAt) {
@@ -124,6 +125,28 @@ export const assessmentsRouter = createRouter({
         .update(assessments)
         .set({ status: "published", publishedAt: new Date() })
         .where(eq(assessments.id, a.id));
+      // Verified skills join the profile's skill list (deduped) — otherwise
+      // a real talent's skills array stays empty and they can never match.
+      const talent = await db.query.talents.findFirst({ where: eq(talents.id, a.talentId) });
+      if (talent) {
+        const merged = [...new Set([...talent.skills, ...a.skillsVerified])];
+        await db.update(talents).set({ skills: merged }).where(eq(talents.id, talent.id));
+        // Refresh the semantic embedding from capability signals only.
+        const embedder = getEmbedder();
+        if (embedder) {
+          const vectors = await embedder.embed([
+            embeddingText({
+              skills: merged,
+              languages: talent.languages,
+              availability: talent.availability,
+            }),
+          ]);
+          await db
+            .update(talents)
+            .set({ embedding: vectors?.[0] ?? null })
+            .where(eq(talents.id, talent.id));
+        }
+      }
       return { ok: true };
     }),
 

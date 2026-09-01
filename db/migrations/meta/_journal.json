@@ -92,6 +92,20 @@
       "when": 1788195600000,
       "tag": "0012_role_allowlist",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "5",
+      "when": 1788203200000,
+      "tag": "0013_messages",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "5",
+      "when": 1788205000000,
+      "tag": "0014_embeddings",
+      "breakpoints": true
     }
   ]
 }

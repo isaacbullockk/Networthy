@@ -9,6 +9,7 @@ import { maskTalent, revealTalent, shouldMask, unlockedTalentIds } from "../lib/
 import { scoreSkills } from "../lib/scoring";
 import { rateLimit } from "../lib/rateLimit";
 import { TALENT_ROLES } from "@contracts/roles";
+import { embeddingText, getEmbedder } from "../lib/embeddings";
 
 /** A talent as served to clients: never the static DB matchScore/matchReasons. */
 function withComputedScore<T extends { matchScore: number; matchReasons: string[]; skills: string[] }>(
@@ -39,7 +40,12 @@ export const talentsRouter = createRouter({
         throw new TRPCError({ code: "TOO_MANY_REQUESTS", message: "Too many requests — slow down" });
       }
       const db = getDb();
-      const all = await db.query.talents.findMany();
+      // Bounded scan: the 500 most recent talents (same cap as vacancy
+      // ranking; revisit with cursor pagination as the pool grows).
+      const all = await db.query.talents.findMany({
+        orderBy: (t, { desc }) => [desc(t.id)],
+        limit: 500,
+      });
       const published = await db.query.assessments.findMany({
         where: eq(assessments.status, "published"),
       });
@@ -129,6 +135,10 @@ export const talentsRouter = createRouter({
     )
     .mutation(async ({ ctx, input }) => {
       if (!ctx.user.talentId) throw new TRPCError({ code: "NOT_FOUND" });
+      const current = await getDb().query.talents.findFirst({
+        where: eq(talents.id, ctx.user.talentId),
+      });
+      if (!current) throw new TRPCError({ code: "NOT_FOUND" });
       await getDb()
         .update(talents)
         .set(input)
@@ -136,6 +146,25 @@ export const talentsRouter = createRouter({
       // Keep the account name in sync with the public profile name.
       if (input.name) {
         await getDb().update(users).set({ name: input.name }).where(eq(users.id, ctx.user.id));
+      }
+      // Capability signals changed → refresh the talent embedding. Identity
+      // fields (name/origin) never reach the embedder — only skills,
+      // languages and availability do.
+      if (input.languages !== undefined || input.availability !== undefined) {
+        const embedder = getEmbedder();
+        if (embedder) {
+          const vectors = await embedder.embed([
+            embeddingText({
+              skills: current.skills,
+              languages: input.languages ?? current.languages,
+              availability: input.availability ?? current.availability,
+            }),
+          ]);
+          await getDb()
+            .update(talents)
+            .set({ embedding: vectors?.[0] ?? null })
+            .where(eq(talents.id, ctx.user.talentId));
+        }
       }
       return getDb().query.talents.findFirst({
         where: eq(talents.id, ctx.user.talentId),

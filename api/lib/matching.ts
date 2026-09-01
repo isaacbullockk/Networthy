@@ -144,7 +144,20 @@ export interface MatchBreakdown {
   skills: number; // 0-80 (70 base + max 10 assessor-verified bonus)
   languages: number; // 0-15
   availability: number; // 0-15
+  semantic?: number; // 0-20, only when embeddings are enabled and both sides embedded
 }
+
+export interface MatchOptions {
+  /**
+   * Cosine-based similarity in [0,1] between vacancy and talent embeddings.
+   * null/undefined → pure rules scoring (identical to pre-embeddings behavior).
+   */
+  semanticSimilarity?: number | null;
+}
+
+/** Embeddings adjust at the margin; the rules engine decides. */
+export const SEMANTIC_MAX = 20;
+export const RULES_SHARE = 0.8;
 
 export interface MatchResult {
   score: number; // 0-100
@@ -224,7 +237,8 @@ function availabilityOverlap(vacancy: string, talent: string): number {
 export function matchTalentToVacancy(
   vacancy: VacancyInput,
   talent: TalentInput,
-  verifiedSkills: string[]
+  verifiedSkills: string[],
+  opts?: MatchOptions
 ): MatchResult {
   // Dedupe vacancy demands by canonical form: "HACCP, haccp" is one demand,
   // not two — duplicates would inflate coverage and the verified bonus.
@@ -284,9 +298,23 @@ export function matchTalentToVacancy(
     languages: Math.round(langScore),
     availability: Math.round(availScore),
   };
-  const score = Math.min(100, breakdown.skills + breakdown.languages + breakdown.availability);
+  let score = Math.min(100, breakdown.skills + breakdown.languages + breakdown.availability);
+
+  // Semantic blend (only when embeddings are live for BOTH sides):
+  // rules shrink to 80% and the embedding signal fills up to 20 points.
+  // Disabled or missing embeddings → the rules score stands untouched.
+  const sim = opts?.semanticSimilarity;
+  if (sim != null && Number.isFinite(sim)) {
+    const clamped = Math.max(0, Math.min(1, sim));
+    const semanticPts = Math.round(clamped * SEMANTIC_MAX);
+    breakdown.semantic = semanticPts;
+    score = Math.min(100, Math.round(score * RULES_SHARE) + semanticPts);
+  }
 
   const reasons: string[] = [];
+  if (breakdown.semantic != null) {
+    reasons.push(`semantic profile similarity: ${Math.round((sim as number) * 100)}%`);
+  }
   for (const s of req.matched) {
     reasons.push(
       verified.has(normalizeSkill(s))

@@ -9,6 +9,7 @@ import Signup from '@/pages/Signup'
 import ForgotPassword from '@/pages/ForgotPassword'
 import ResetPassword from '@/pages/ResetPassword'
 import VerifyEmail from '@/pages/VerifyEmail'
+import Chat from '@/pages/Chat'
 import Discover from '@/pages/Discover'
 import Vacancies from '@/pages/Vacancies'
 import TalentProfile from '@/pages/TalentProfile'
@@ -103,6 +104,7 @@ function AppRoutes() {
         <Route path="/portal/profile" element={<RequireAuth role="talent"><PortalProfile /></RequireAuth>} />
         {/* NetWorthy Record — the earned CV (talent + recruiter) */}
         <Route path="/record/:matchId" element={<RequireAuth><Record /></RequireAuth>} />
+        <Route path="/chat/:matchId" element={<RequireAuth><Chat /></RequireAuth>} />
         {/* Retention mode — first 90 days (talent + recruiter) */}
         <Route path="/retention/:matchId" element={<RequireAuth><Retention /></RequireAuth>} />
         {/* Admin — trust gate */}

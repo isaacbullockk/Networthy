@@ -37,6 +37,7 @@ const TALENTS: Omit<schema.Talent, "id" | "createdAt">[] = [
     availability: "Available from next month · 36–40 hrs",
     videoIntroSec: 94, gradient: "from-orange-400 to-rose-500", matchScore: 0,
     matchReasons: [],
+    embedding: null,
   },
   {
     name: "Bereket Tesfay", role: "Chef & Kitchen Lead", origin: "Eritrea", yearsInNL: 8,
@@ -55,6 +56,7 @@ const TALENTS: Omit<schema.Talent, "id" | "createdAt">[] = [
     availability: "Available immediately · fulltime",
     videoIntroSec: 71, gradient: "from-amber-400 to-orange-600", matchScore: 0,
     matchReasons: [],
+    embedding: null,
   },
   {
     name: "Olena Kovalenko", role: "Financial Analyst", origin: "Ukraine", yearsInNL: 3,
@@ -73,6 +75,7 @@ const TALENTS: Omit<schema.Talent, "id" | "createdAt">[] = [
     availability: "Available in 2 weeks · 32–40 hrs",
     videoIntroSec: 82, gradient: "from-sky-400 to-indigo-600", matchScore: 0,
     matchReasons: [],
+    embedding: null,
   },
   {
     name: "Yusuf Abdi", role: "Logistics Coordinator", origin: "Somalia", yearsInNL: 9,
@@ -91,6 +94,7 @@ const TALENTS: Omit<schema.Talent, "id" | "createdAt">[] = [
     availability: "Available immediately · fulltime, shifts OK",
     videoIntroSec: 66, gradient: "from-emerald-400 to-teal-600", matchScore: 0,
     matchReasons: [],
+    embedding: null,
   },
   {
     name: "Farah Nasser", role: "UX Designer", origin: "Iraq", yearsInNL: 5,
@@ -109,6 +113,7 @@ const TALENTS: Omit<schema.Talent, "id" | "createdAt">[] = [
     availability: "Available from next month · 32–40 hrs",
     videoIntroSec: 88, gradient: "from-violet-400 to-purple-600", matchScore: 0,
     matchReasons: [],
+    embedding: null,
   },
   {
     name: "Samuel Okonkwo", role: "Data Engineer", origin: "Nigeria", yearsInNL: 4,
@@ -127,6 +132,7 @@ const TALENTS: Omit<schema.Talent, "id" | "createdAt">[] = [
     availability: "Available in 1 month · 36–40 hrs",
     videoIntroSec: 59, gradient: "from-cyan-400 to-blue-600", matchScore: 0,
     matchReasons: [],
+    embedding: null,
   },
   {
     name: "Rania Khalil", role: "HR & People Advisor", origin: "Lebanon", yearsInNL: 7,
@@ -145,6 +151,7 @@ const TALENTS: Omit<schema.Talent, "id" | "createdAt">[] = [
     availability: "Available immediately · 32–40 hrs",
     videoIntroSec: 76, gradient: "from-pink-400 to-rose-600", matchScore: 0,
     matchReasons: [],
+    embedding: null,
   },
   {
     name: "Karim Benzari", role: "Mechatronics Technician", origin: "Syria", yearsInNL: 6,
@@ -163,6 +170,7 @@ const TALENTS: Omit<schema.Talent, "id" | "createdAt">[] = [
     availability: "Available immediately · fulltime, shifts OK",
     videoIntroSec: 63, gradient: "from-slate-400 to-slate-700", matchScore: 0,
     matchReasons: [],
+    embedding: null,
   },
 ];
 

@@ -112,6 +112,9 @@ export const talents = mysqlTable("talents", {
   gradient: varchar("gradient", { length: 100 }).notNull(),
   matchScore: int("match_score").notNull().default(80),
   matchReasons: json("match_reasons").$type<string[]>().notNull(),
+  // Embedding of capability signals only (skills/languages/availability).
+  // Null until the self-hosted embedder is configured (EMBEDDING_URL).
+  embedding: json("embedding").$type<number[]>(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -151,6 +154,26 @@ export const matches = mysqlTable(
     createdAt: timestamp("created_at").defaultNow().notNull(),
   },
   (t) => ({ recruiterIdx: index("recruiter_idx").on(t.recruiterId), talentIdx: index("talent_idx").on(t.talentId) })
+);
+
+/**
+ * Chat between the two sides of a match. Only exists inside an accepted
+ * match — the consent gate is enforced in messagesRouter, not here.
+ */
+export const messages = mysqlTable(
+  "messages",
+  {
+    id: serial("id").primaryKey(),
+    matchId: bigint("match_id", { mode: "number", unsigned: true })
+      .notNull()
+      .references(() => matches.id, { onDelete: "cascade" }),
+    senderId: bigint("sender_id", { mode: "number", unsigned: true })
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    body: varchar("body", { length: 2000 }).notNull(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (t) => ({ matchIdx: index("msg_match_idx").on(t.matchId) })
 );
 
 export const questionnaires = mysqlTable(
@@ -310,6 +333,7 @@ export const vacancies = mysqlTable(
     languages: json("languages").$type<string[]>().notNull(),
     availability: varchar("availability", { length: 255 }).notNull(),
     status: mysqlEnum("status", ["open", "closed"]).notNull().default("open"),
+    embedding: json("embedding").$type<number[]>(),
     createdAt: timestamp("created_at").defaultNow().notNull(),
   },
   (t) => ({ recruiterIdx: index("vacancy_recruiter_idx").on(t.recruiterId) })

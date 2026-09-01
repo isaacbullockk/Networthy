@@ -20,3 +20,9 @@ export type { AppError };
  * gate banner on this exact constant — never on a re-typed string.
  */
 export const EMAIL_VERIFICATION_REQUIRED = "Confirm your email address first";
+
+/**
+ * Thrown when someone opens a chat before the talent accepted the match.
+ * Shared contract — the frontend keys the locked state on this constant.
+ */
+export const CHAT_REQUIRES_CONSENT = "Chat opens once the talent accepts the connection";

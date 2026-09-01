@@ -211,6 +211,7 @@ function RankedMatches({ vacancyId }: { vacancyId: number }) {
               <span>skills {result.breakdown.skills}/70+</span>
               <span>languages {result.breakdown.languages}/15</span>
               <span>availability {result.breakdown.availability}/15</span>
+              {result.breakdown.semantic != null && <span>semantic {result.breakdown.semantic}/20</span>}
             </div>
             <ul className="mt-2 space-y-1">
               {[...result.reasons].sort((a, b) => Number(b.startsWith('missing')) - Number(a.startsWith('missing'))).slice(0, 5).map((r) => (

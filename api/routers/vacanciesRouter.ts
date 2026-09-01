@@ -13,6 +13,23 @@ import {
   matchTalentToVacancy,
 } from "../lib/matching";
 import { rateLimit } from "../lib/rateLimit";
+import { cosineSimilarity, embeddingText, getEmbedder, toSimilarity } from "../lib/embeddings";
+
+/**
+ * Embed capability signals only (skills/languages/availability). Returns
+ * null when embeddings are disabled or the service fails — the vacancy
+ * simply scores rules-only.
+ */
+async function embedCapabilitySignals(parts: {
+  skills: string[];
+  languages: string[];
+  availability: string;
+}): Promise<number[] | null> {
+  const embedder = getEmbedder();
+  if (!embedder) return null;
+  const vectors = await embedder.embed([embeddingText(parts)]);
+  return vectors?.[0] ?? null;
+}
 
 const vacancyInput = z.object({
   title: z.string().min(1).max(255),
@@ -64,9 +81,14 @@ export const vacanciesRouter = createRouter({
     if (!rateLimit(`vacancies.create:${ctx.user.id}`, 30, 60 * 60_000)) {
       throw new TRPCError({ code: "TOO_MANY_REQUESTS", message: "Too many vacancies — try again later" });
     }
+    const embedding = await embedCapabilitySignals({
+      skills: [...input.requiredSkills, ...input.niceSkills],
+      languages: input.languages,
+      availability: input.availability,
+    });
     const [{ id }] = await getDb()
       .insert(vacancies)
-      .values({ ...input, recruiterId: ctx.user.id })
+      .values({ ...input, recruiterId: ctx.user.id, embedding })
       .$returningId();
     return getDb().query.vacancies.findFirst({ where: eq(vacancies.id, id) });
   }),
@@ -74,9 +96,28 @@ export const vacanciesRouter = createRouter({
   update: recruiterQuery
     .input(vacancyInput.partial().extend({ id: z.number(), status: z.enum(["open", "closed"]).optional() }))
     .mutation(async ({ ctx, input }) => {
-      await ownVacancy(ctx.user.id, input.id);
+      const existing = await ownVacancy(ctx.user.id, input.id);
       const { id, ...patch } = input;
-      await getDb().update(vacancies).set(patch).where(eq(vacancies.id, id));
+      // Capability signals changed → re-embed. Unrelated patch → keep vector.
+      const signalsChanged =
+        patch.requiredSkills !== undefined ||
+        patch.niceSkills !== undefined ||
+        patch.languages !== undefined ||
+        patch.availability !== undefined;
+      const embedding = signalsChanged
+        ? await embedCapabilitySignals({
+            skills: [
+              ...(patch.requiredSkills ?? existing.requiredSkills),
+              ...(patch.niceSkills ?? existing.niceSkills),
+            ],
+            languages: patch.languages ?? existing.languages,
+            availability: patch.availability ?? existing.availability,
+          })
+        : undefined;
+      await getDb()
+        .update(vacancies)
+        .set(embedding === undefined ? patch : { ...patch, embedding })
+        .where(eq(vacancies.id, id));
       return getDb().query.vacancies.findFirst({ where: eq(vacancies.id, id) });
     }),
 
@@ -114,12 +155,23 @@ export const vacanciesRouter = createRouter({
     }
     const unlocked = ctx.user.anonymousBrowsing ? await unlockedTalentIds(ctx.user.id) : null;
 
+    // Semantic layer: only when the embedder is configured AND both sides
+    // carry an embedding. Everything else falls back to pure rules.
+    const vacancyVec = vacancy.embedding ?? null;
+
     // Ranking needs every scanned talent scored; the scan is capped at 500
     // and rate-limited per recruiter. Revisit with pre-computation when the
     // pool approaches thousands.
     return all
       .map((t) => {
         const shown = unlocked && !unlocked.has(t.id) ? maskTalent(t) : revealTalent(t);
+        // Dimension mismatch (e.g. model swapped mid-run) must degrade to
+        // rules-only — never silently zero the similarity and penalize the
+        // talent for an infrastructure inconsistency.
+        const semanticSimilarity =
+          vacancyVec && t.embedding && vacancyVec.length === t.embedding.length
+            ? toSimilarity(cosineSimilarity(vacancyVec, t.embedding))
+            : null;
         const result = matchTalentToVacancy(
           {
             requiredSkills: vacancy.requiredSkills,
@@ -128,7 +180,8 @@ export const vacanciesRouter = createRouter({
             availability: vacancy.availability,
           },
           { skills: t.skills, languages: t.languages, availability: t.availability },
-          verifiedByTalent.get(t.id) ?? []
+          verifiedByTalent.get(t.id) ?? [],
+          { semanticSimilarity }
         );
         return { talent: shown, result };
       })
