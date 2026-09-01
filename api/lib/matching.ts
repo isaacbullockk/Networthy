@@ -84,6 +84,47 @@ export function normalizeLanguage(raw: string): string {
   return LANGUAGE_INDEX.get(s) ?? s;
 }
 
+/* ---------- Free-text extraction (vacancy quick-add) ---------- */
+
+const escapeRe = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+function scanVariants(text: string, table: Record<string, string[]>): string[] {
+  // Normalize separators first ("food-safety" → "food safety"), matching
+  // normalizeSkill's behavior, so hyphenated mentions aren't missed.
+  const clean = text.toLowerCase().replace(/[._/\\-]+/g, " ");
+  const found = new Set<string>();
+  for (const [canonical, variants] of Object.entries(table)) {
+    for (const v of variants) {
+      const re = new RegExp(`(^|[^\\p{L}])${escapeRe(v)}(?=$|[^\\p{L}])`, "iu");
+      if (re.test(clean)) {
+        found.add(canonical);
+        break;
+      }
+    }
+  }
+  return [...found];
+}
+
+/** Canonical skills mentioned anywhere in free text (all known variants). */
+export function extractSkillsFromText(text: string): string[] {
+  return scanVariants(text, CANONICAL);
+}
+
+/** Canonical languages mentioned anywhere in free text. */
+export function extractLanguagesFromText(text: string): string[] {
+  return scanVariants(text, LANGUAGE_CANONICAL);
+}
+
+/** Availability signals from free text; empty when the text says nothing. */
+export function extractAvailabilityFromText(text: string): string {
+  const hits: string[] = [];
+  if (/full[-\s]?time|voltijd|40\s*uur|38\s*uur|36\s*uur|دوام كامل/iu.test(text)) hits.push("Full-time");
+  if (/part[-\s]?time|deeltijd|دوام جزئي/iu.test(text)) hits.push("Part-time");
+  if (/weekend/iu.test(text)) hits.push("Weekends");
+  if (/shift|ploegendienst|نوبات/iu.test(text)) hits.push("Shifts");
+  return hits.join(" · ");
+}
+
 /* ---------- Matching ---------- */
 
 export interface VacancyInput {
@@ -139,11 +180,71 @@ function tokenOverlap(a: string, b: string): number {
   return hit / Math.max(ta.size, tb.size);
 }
 
+/* ---------- Availability normalization (EN / NL / AR) ---------- */
+
+/**
+ * Free-text availability like "full-time" vs "part-time" shares the token
+ * "time" — raw token overlap would call them a match. Canonicalize first:
+ * each known availability signal maps to one token across EN/NL/AR, so
+ * "voltijd" and "full-time" are the same thing and "part-time" is not.
+ */
+const AVAILABILITY_SIGNALS: Record<string, RegExp> = {
+  fulltime: /full[-\s]?time|voltijd|40\s*uur|38\s*uur|36\s*uur|دوام كامل/iu,
+  parttime: /part[-\s]?time|deeltijd|دوام جزئي/iu,
+  weekends: /weekend|عطلة نهاية الأسبوع/iu,
+  shifts: /shift|ploegendienst|نوبات/iu,
+  evenings: /evening|avond|مساء/iu,
+  remote: /remote|thuiswerk|عن بعد/iu,
+};
+
+export function normalizeAvailability(text: string): Set<string> {
+  const out = new Set<string>();
+  for (const [canonical, re] of Object.entries(AVAILABILITY_SIGNALS)) {
+    if (re.test(text)) out.add(canonical);
+  }
+  return out;
+}
+
+/** Availability match: canonical signal overlap, raw token overlap as fallback. */
+function availabilityOverlap(vacancy: string, talent: string): number {
+  const va = normalizeAvailability(vacancy);
+  // The vacancy is the demand side: once it names a known signal, only that
+  // signal counts — a talent without it scores 0. Raw token overlap is only
+  // a fallback for demands we don't understand ("32-40 hours per week").
+  if (va.size > 0) {
+    const ta = normalizeAvailability(talent);
+    let hit = 0;
+    for (const s of va) if (ta.has(s)) hit++;
+    return hit / va.size;
+  }
+  return tokenOverlap(vacancy, talent);
+}
+
+
 export function matchTalentToVacancy(
   vacancy: VacancyInput,
   talent: TalentInput,
   verifiedSkills: string[]
 ): MatchResult {
+  // Dedupe vacancy demands by canonical form: "HACCP, haccp" is one demand,
+  // not two — duplicates would inflate coverage and the verified bonus.
+  // Each category gets its OWN set: a skill must never suppress a language
+  // that happens to normalize to the same string (and vice versa).
+  const dedupe = (list: string[], norm: (s: string) => string) => {
+    const seen = new Set<string>();
+    return list.filter((s) => {
+      const n = norm(s);
+      if (seen.has(n)) return false;
+      seen.add(n);
+      return true;
+    });
+  };
+  vacancy = {
+    ...vacancy,
+    requiredSkills: dedupe(vacancy.requiredSkills, normalizeSkill),
+    niceSkills: dedupe(vacancy.niceSkills, normalizeSkill),
+    languages: dedupe(vacancy.languages, normalizeLanguage),
+  };
   const talentSkills = new Set(talent.skills.map(normalizeSkill));
   const verified = new Set(verifiedSkills.map(normalizeSkill));
   const talentLangs = new Set(talent.languages.map(normalizeLanguage));
@@ -171,9 +272,11 @@ export function matchTalentToVacancy(
   const langScore =
     langWanted.length === 0 ? WEIGHTS.languages : WEIGHTS.languages * (langMatched.length / langWanted.length);
 
-  // Availability (max 15) — token overlap between texts; no demand = full score
+  // Availability (max 15) — canonical signal overlap (EN/NL/AR aware);
+  // raw token overlap only when neither side names a known signal.
+  // No demand = full score.
   const availScore = vacancy.availability.trim()
-    ? WEIGHTS.availability * Math.min(1, tokenOverlap(vacancy.availability, talent.availability) * 2)
+    ? WEIGHTS.availability * availabilityOverlap(vacancy.availability, talent.availability)
     : WEIGHTS.availability;
 
   const breakdown: MatchBreakdown = {

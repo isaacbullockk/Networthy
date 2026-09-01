@@ -1,5 +1,11 @@
 import { describe, it, expect } from "vitest";
-import { matchTalentToVacancy, normalizeSkill } from "./matching";
+import {
+  extractAvailabilityFromText,
+  extractLanguagesFromText,
+  extractSkillsFromText,
+  matchTalentToVacancy,
+  normalizeSkill,
+} from "./matching";
 
 const vacancy = {
   requiredSkills: ["HACCP", "cooking"],
@@ -80,6 +86,18 @@ describe("matchTalentToVacancy", () => {
     expect(r.breakdown.languages).toBe(15);
   });
 
+  it("a skill can never suppress a language demand (per-category dedup)", () => {
+    // "dutch" as a typed skill and "Dutch" as a language normalize to the
+    // same string; a shared dedup set would silently drop the language.
+    const r = matchTalentToVacancy(
+      { requiredSkills: ["dutch"], niceSkills: [], languages: ["Dutch"], availability: "" },
+      { skills: ["dutch"], languages: ["Nederlands"], availability: "" },
+      []
+    );
+    expect(r.breakdown.languages).toBe(15);
+    expect(r.breakdown.skills).toBeGreaterThan(0);
+  });
+
   it("a vacancy with no demands scores everyone equally", () => {
     const open = { requiredSkills: [], niceSkills: [], languages: [], availability: "" };
     const a = matchTalentToVacancy(open, { skills: [], languages: [], availability: "" }, []);
@@ -117,5 +135,87 @@ describe("matchTalentToVacancy", () => {
       ["HACCP", "kok"]
     );
     expect(r.score).toBeLessThanOrEqual(100);
+  });
+});
+
+describe("vacancy quick-add extraction", () => {
+  it("pulls skills from a Dutch job ad across spellings", () => {
+    const text = "Wij zoeken een kok met HACCP certificaat. Ervaring met de heftruck is een pre.";
+    const skills = extractSkillsFromText(text);
+    expect(skills).toContain("cooking");
+    expect(skills).toContain("foodsafety");
+    expect(skills).toContain("forklift");
+  });
+
+  it("pulls languages and availability from free text", () => {
+    const text = "Fulltime functie, Nederlands en Engels vereist. Weekenddiensten mogelijk.";
+    expect(extractLanguagesFromText(text)).toEqual(expect.arrayContaining(["dutch", "english"]));
+    const avail = extractAvailabilityFromText(text);
+    expect(avail).toContain("Full-time");
+    expect(avail).toContain("Weekends");
+  });
+
+  it("invents nothing: unrelated text yields empty extractions", () => {
+    const text = "Gezellig team, mooie kantoorhond, uitstekende koffie.";
+    expect(extractSkillsFromText(text)).toEqual([]);
+    expect(extractLanguagesFromText(text)).toEqual([]);
+    expect(extractAvailabilityFromText(text)).toBe("");
+  });
+
+  it("does not match inside unrelated words", () => {
+    // "react" inside "reaction" must not count as the React skill
+    expect(extractSkillsFromText("We expect a quick reaction time.")).toEqual([]);
+  });
+});
+
+describe("availability canonicalization", () => {
+  it("full-time does NOT match part-time (shared 'time' token is not a match)", () => {
+    const r = matchTalentToVacancy(
+      { requiredSkills: [], niceSkills: [], languages: [], availability: "full-time" },
+      { skills: [], languages: [], availability: "part-time" },
+      []
+    );
+    expect(r.breakdown.availability).toBe(0);
+  });
+
+  it("full-time matches voltijd across languages", () => {
+    const r = matchTalentToVacancy(
+      { requiredSkills: [], niceSkills: [], languages: [], availability: "full-time 40 hours" },
+      { skills: [], languages: [], availability: "voltijd" },
+      []
+    );
+    expect(r.breakdown.availability).toBe(15);
+  });
+
+  it("free-text hours still work when no known signal is present", () => {
+    const r = matchTalentToVacancy(
+      { requiredSkills: [], niceSkills: [], languages: [], availability: "32-40 hours per week" },
+      { skills: [], languages: [], availability: "available 40 hours per week" },
+      []
+    );
+    expect(r.breakdown.availability).toBeGreaterThan(0);
+  });
+});
+
+describe("availability demand-side rule", () => {
+  it("a vacancy with a known signal never falls back to raw token overlap", () => {
+    const r = matchTalentToVacancy(
+      { requiredSkills: [], niceSkills: [], languages: [], availability: "full-time" },
+      { skills: [], languages: [], availability: "full stack developer, available immediately" },
+      []
+    );
+    expect(r.breakdown.availability).toBe(0);
+  });
+});
+
+describe("deduped demands", () => {
+  it("duplicate required skills (different spellings) count once — verified bonus not inflated", () => {
+    const r = matchTalentToVacancy(
+      { requiredSkills: ["HACCP", "haccp"], niceSkills: [], languages: [], availability: "" },
+      { skills: ["haccp"], languages: [], availability: "" },
+      ["HACCP"]
+    );
+    // 50 coverage + 20 (no nice-skills demand) + 3 verified bonus (once, not 6)
+    expect(r.breakdown.skills).toBe(73);
   });
 });

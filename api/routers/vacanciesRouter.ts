@@ -6,7 +6,12 @@ import { getDb } from "../queries/connection";
 import { assessments, vacancies } from "@db/schema";
 import { eq } from "drizzle-orm";
 import { maskTalent, revealTalent, unlockedTalentIds } from "../lib/anonymize";
-import { matchTalentToVacancy } from "../lib/matching";
+import {
+  extractAvailabilityFromText,
+  extractLanguagesFromText,
+  extractSkillsFromText,
+  matchTalentToVacancy,
+} from "../lib/matching";
 import { rateLimit } from "../lib/rateLimit";
 
 const vacancyInput = z.object({
@@ -33,6 +38,27 @@ export const vacanciesRouter = createRouter({
       orderBy: (v, { desc }) => [desc(v.createdAt)],
     });
   }),
+
+  /**
+   * Quick-add: paste a job description, get a structured draft back.
+   * Nothing is saved — the recruiter reviews and edits before creating.
+   * Deterministic extraction only; no AI guessing, no invented skills.
+   */
+  parse: recruiterQuery
+    .input(z.object({ text: z.string().min(10).max(20000) }))
+    .mutation(async ({ ctx, input }) => {
+      if (!rateLimit(`vacancies.parse:${ctx.user.id}`, 30, 60 * 60_000)) {
+        throw new TRPCError({ code: "TOO_MANY_REQUESTS", message: "Too many attempts — try again later" });
+      }
+      const firstLine =
+        input.text.split("\n").map((l) => l.trim()).find((l) => l.length >= 3 && l.length <= 80) ?? "";
+      return {
+        title: firstLine.replace(/^(vacature|job|position|functie)\s*[:\-–]\s*/i, ""),
+        requiredSkills: extractSkillsFromText(input.text),
+        languages: extractLanguagesFromText(input.text),
+        availability: extractAvailabilityFromText(input.text),
+      };
+    }),
 
   create: recruiterQuery.input(vacancyInput).mutation(async ({ ctx, input }) => {
     if (!rateLimit(`vacancies.create:${ctx.user.id}`, 30, 60 * 60_000)) {
@@ -67,8 +93,16 @@ export const vacanciesRouter = createRouter({
    */
   match: recruiterQuery.input(z.object({ vacancyId: z.number() })).query(async ({ ctx, input }) => {
     const vacancy = await ownVacancy(ctx.user.id, input.vacancyId);
+    if (!rateLimit(`vacancies.match:${ctx.user.id}`, 60, 60 * 60_000)) {
+      throw new TRPCError({ code: "TOO_MANY_REQUESTS", message: "Too many ranking requests — try again later" });
+    }
     const db = getDb();
-    const all = await db.query.talents.findMany();
+    // Ranking scores the pool in-process; cap the scan to the 500 most recent
+    // talents so the query stays bounded as the pool grows.
+    const all = await db.query.talents.findMany({
+      orderBy: (t, { desc }) => [desc(t.id)],
+      limit: 500,
+    });
     const published = await db.query.assessments.findMany({
       where: eq(assessments.status, "published"),
     });
@@ -80,9 +114,9 @@ export const vacanciesRouter = createRouter({
     }
     const unlocked = ctx.user.anonymousBrowsing ? await unlockedTalentIds(ctx.user.id) : null;
 
-    // Note: ranking needs every talent scored, so this loads the full pool.
-    // Fine at current scale (hundreds); revisit with pre-computation/pagination
-    // when the pool approaches thousands.
+    // Ranking needs every scanned talent scored; the scan is capped at 500
+    // and rate-limited per recruiter. Revisit with pre-computation when the
+    // pool approaches thousands.
     return all
       .map((t) => {
         const shown = unlocked && !unlocked.has(t.id) ? maskTalent(t) : revealTalent(t);

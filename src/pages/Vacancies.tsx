@@ -16,6 +16,16 @@ export default function Vacancies() {
   const [nice, setNice] = useState('')
   const [languages, setLanguages] = useState('')
   const [availability, setAvailability] = useState('')
+  const [paste, setPaste] = useState('')
+
+  const parse = trpc.vacancies.parse.useMutation({
+    onSuccess: (draft) => {
+      if (draft.title) setTitle(draft.title)
+      if (draft.requiredSkills.length) setRequired(draft.requiredSkills.join(', '))
+      if (draft.languages.length) setLanguages(draft.languages.join(', '))
+      if (draft.availability) setAvailability(draft.availability)
+    },
+  })
 
   const create = trpc.vacancies.create.useMutation({
     onSuccess: async () => {
@@ -64,6 +74,29 @@ export default function Vacancies() {
             })
           }}
         >
+          <div className="rounded-2xl border border-dashed border-primary/40 bg-primary/5 p-4">
+            <label className="text-sm font-semibold">Fastest way: paste the job description</label>
+            <textarea
+              value={paste}
+              onChange={(e) => setPaste(e.target.value)}
+              rows={4}
+              placeholder="Paste the vacancy text (EN/NL/AR) — we'll extract skills, languages and availability. You check and adjust before anything is saved."
+              className={`mt-1.5 ${inputCls}`}
+            />
+            <button
+              type="button"
+              disabled={paste.trim().length < 10 || parse.isPending}
+              onClick={() => parse.mutate({ text: paste })}
+              className="mt-2 rounded-xl border border-primary px-4 py-2 text-sm font-semibold text-primary transition hover:bg-primary/10 disabled:opacity-50"
+            >
+              {parse.isPending ? 'Reading…' : 'Fill the form from this text'}
+            </button>
+            {parse.isSuccess && (
+              <p className="mt-2 text-xs text-muted-foreground">
+                Draft filled in below — nothing is saved until you click Create.
+              </p>
+            )}
+          </div>
           <div>
             <label className="text-sm font-semibold">Role title</label>
             <input value={title} onChange={(e) => setTitle(e.target.value)} required placeholder="e.g. Kitchen chef" className={`mt-1.5 ${inputCls}`} />
