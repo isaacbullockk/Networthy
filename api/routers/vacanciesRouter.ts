@@ -7,6 +7,7 @@ import { assessments, vacancies } from "@db/schema";
 import { eq } from "drizzle-orm";
 import { maskTalent, revealTalent, unlockedTalentIds } from "../lib/anonymize";
 import { matchTalentToVacancy } from "../lib/matching";
+import { rateLimit } from "../lib/rateLimit";
 
 const vacancyInput = z.object({
   title: z.string().min(1).max(255),
@@ -34,6 +35,9 @@ export const vacanciesRouter = createRouter({
   }),
 
   create: recruiterQuery.input(vacancyInput).mutation(async ({ ctx, input }) => {
+    if (!rateLimit(`vacancies.create:${ctx.user.id}`, 30, 60 * 60_000)) {
+      throw new TRPCError({ code: "TOO_MANY_REQUESTS", message: "Too many vacancies — try again later" });
+    }
     const [{ id }] = await getDb()
       .insert(vacancies)
       .values({ ...input, recruiterId: ctx.user.id })

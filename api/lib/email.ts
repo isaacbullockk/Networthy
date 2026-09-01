@@ -96,10 +96,52 @@ const L = {
       ignore: "لم تطلب هذا؟ يمكنك تجاهل هذه الرسالة — ستبقى كلمة مرورك كما هي.",
     },
   },
+  verify: {
+    en: {
+      subject: "Confirm your NetWorthy email address",
+      title: "One click to confirm it's you.",
+      body: "Welcome to NetWorthy. Confirm this email address to activate your account — the link works for 24 hours and can be used once.",
+      cta: "Confirm my email",
+      ignore: "Didn't create an account? You can ignore this email.",
+    },
+    nl: {
+      subject: "Bevestig je NetWorthy-e-mailadres",
+      title: "Eén klik om te bevestigen dat jij het bent.",
+      body: "Welkom bij NetWorthy. Bevestig dit e-mailadres om je account te activeren — de link werkt 24 uur en is eenmalig.",
+      cta: "Bevestig mijn e-mail",
+      ignore: "Geen account aangemaakt? Dan kun je deze e-mail negeren.",
+    },
+    ar: {
+      subject: "أكّد عنوان بريدك الإلكتروني في NetWorthy",
+      title: "نقرة واحدة للتأكيد أنه أنت.",
+      body: "مرحباً بك في NetWorthy. أكّد هذا البريد الإلكتروني لتفعيل حسابك — يعمل الرابط لمدة 24 ساعة ويُستخدم مرة واحدة.",
+      cta: "تأكيد بريدي الإلكتروني",
+      ignore: "لم تنشئ حساباً؟ يمكنك تجاهل هذه الرسالة.",
+    },
+  },
+  connection: {
+    en: {
+      subject: "An employer wants to connect with you on NetWorthy",
+      title: "Someone noticed your talent.",
+      body: "wants to connect with you. Your name and story stay private until you accept — you decide. Open your portal to accept or decline.",
+      cta: "Review the request",
+    },
+    nl: {
+      subject: "Een werkgever wil met je verbinden op NetWorthy",
+      title: "Iemand heeft jouw talent gezien.",
+      body: "wil met je verbinden. Je naam en verhaal blijven privé tot je accepteert — jij beslist. Open je portaal om te accepteren of te weigeren.",
+      cta: "Bekijk het verzoek",
+    },
+    ar: {
+      subject: "صاحب عمل يريد التواصل معك عبر NetWorthy",
+      title: "شخص ما لاحظ موهبتك.",
+      body: "يريد التواصل معك. يبقى اسمك وقصتك خاصين حتى تقبل — القرار لك. افتح بوابتك للقبول أو الرفض.",
+      cta: "راجع الطلب",
+    },
+  },
   approved: {
     en: {
-      subject: "You're approved — welcome to the NetWorthy pool",
-      title: "You're in.",
+      subject: "You're approved — welcome to the NetWorthy pool",      title: "You're in.",
       body: "Your recruiter account has been personally approved. The pool is open: verified skills, real stories, people worth meeting.",
       cta: "Discover talent",
     },
@@ -183,8 +225,40 @@ export function sendAssessorInvite(to: string, name: string, tempPassword: strin
   void send(to, t.subject, html, `${t.title}\n\n${t.body}\n\n${tempPassword}\n\n${url}`);
 }
 
-/** Admin alert: a recruiter applied and waits in the trust gate. */
-export function sendAdminRecruiterApplied(name: string, company: string | null, email: string): void {
+/** Email verification at signup — in the recipient's own language. */
+export function sendVerificationEmail(to: string, name: string, token: string, locale: string | null): void {
+  const t = L.verify[localeOf(locale)];
+  const url = `${appOrigin()}/verify-email?token=${token}`;
+  const html = shell(`
+    <h1 style="margin:0 0 16px;font-size:22px;color:#1c1917">${t.title}</h1>
+    <p style="color:#44403c;line-height:1.6;margin:0">Hi ${name},</p>
+    <p style="color:#44403c;line-height:1.6">${t.body}</p>
+    ${button(url, t.cta)}
+    <p style="color:#78716c;font-size:13px;line-height:1.6;margin-top:24px;word-break:break-all">
+      ${url}
+    </p>
+    <p style="color:#78716c;font-size:13px;line-height:1.6;margin-top:24px">${t.ignore}</p>`);
+  void send(to, t.subject, html, `${t.title}\n\n${t.body}\n\n${url}\n\n${t.ignore}`);
+}
+
+/** Connection request → the talent decides. Identity stays locked. */
+export function sendConnectionRequest(
+  to: string,
+  talentName: string,
+  company: string,
+  locale: string | null
+): void {
+  const t = L.connection[localeOf(locale)];
+  const url = `${appOrigin()}/portal`;
+  const html = shell(`
+    <h1 style="margin:0 0 16px;font-size:22px;color:#1c1917">${t.title}</h1>
+    <p style="color:#44403c;line-height:1.6;margin:0">Hi ${talentName},</p>
+    <p style="color:#44403c;line-height:1.6"><strong>${company}</strong> ${t.body}</p>
+    ${button(url, t.cta)}`);
+  void send(to, t.subject, html, `${t.title}\n\n${company} ${t.body}\n\n${url}`);
+}
+
+/** Admin alert: a recruiter applied and waits in the trust gate. */export function sendAdminRecruiterApplied(name: string, company: string | null, email: string): void {
   const subject = `New recruiter application: ${name}${company ? ` (${company})` : ""}`;
   const url = `${appOrigin()}/admin`;
   const html = shell(`

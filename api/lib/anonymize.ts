@@ -14,18 +14,34 @@ import { getDb } from "../queries/connection";
  * Enforced server-side: identity fields never leave the API for anonymized
  * talents, so no client bug can leak them.
  */
-export type PoolTalent = Talent & { anonymized: boolean };
+/**
+ * A masked talent has its identity fields cleared — the type says so
+ * literally ("" instead of string) so no caller can pretend otherwise.
+ */
+export type MaskedTalent = Omit<Talent, "name" | "origin" | "tagline" | "story"> & {
+  anonymized: true;
+  name: "";
+  origin: "";
+  tagline: "";
+  story: "";
+};
+export type RevealedTalent = Talent & { anonymized: false };
+export type PoolTalent = MaskedTalent | RevealedTalent;
 
-export function maskTalent(t: Talent): PoolTalent {
+export function maskTalent(t: Talent): MaskedTalent {
   return {
     ...t,
     anonymized: true,
     name: "",
     origin: "",
+    // Free text is identity too: a story like "fed half our street in Asmara"
+    // identifies a person even without a name. Unlocks after accepted consent.
+    tagline: "",
+    story: "",
   };
 }
 
-export function revealTalent(t: Talent): PoolTalent {
+export function revealTalent(t: Talent): RevealedTalent {
   return { ...t, anonymized: false };
 }
 

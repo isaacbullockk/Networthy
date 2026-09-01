@@ -8,6 +8,7 @@ import Login from '@/pages/Login'
 import Signup from '@/pages/Signup'
 import ForgotPassword from '@/pages/ForgotPassword'
 import ResetPassword from '@/pages/ResetPassword'
+import VerifyEmail from '@/pages/VerifyEmail'
 import Discover from '@/pages/Discover'
 import Vacancies from '@/pages/Vacancies'
 import TalentProfile from '@/pages/TalentProfile'
@@ -85,6 +86,7 @@ function AppRoutes() {
       <Route path="/signup" element={<Signup />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
+      <Route path="/verify-email" element={<VerifyEmail />} />
       <Route element={<Layout />}>
         <Route path="/" element={<Landing />} />
         {/* Recruiter routes */}

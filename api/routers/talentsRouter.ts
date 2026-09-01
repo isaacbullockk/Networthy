@@ -3,10 +3,12 @@ import { TRPCError } from "@trpc/server";
 import { createRouter } from "../middleware";
 import { authedQuery, recruiterQuery, talentQuery } from "../auth";
 import { getDb } from "../queries/connection";
-import { assessments, talents, videoIntros } from "@db/schema";
+import { assessments, talents, users, videoIntros } from "@db/schema";
 import { and, eq } from "drizzle-orm";
 import { maskTalent, revealTalent, shouldMask, unlockedTalentIds } from "../lib/anonymize";
 import { scoreSkills } from "../lib/scoring";
+import { rateLimit } from "../lib/rateLimit";
+import { TALENT_ROLES } from "@contracts/roles";
 
 /** A talent as served to clients: never the static DB matchScore/matchReasons. */
 function withComputedScore<T extends { matchScore: number; matchReasons: string[]; skills: string[] }>(
@@ -32,6 +34,10 @@ export const talentsRouter = createRouter({
         .optional()
     )
     .query(async ({ ctx, input }) => {
+      // Pool browsing is the scraping target — cap it per recruiter.
+      if (!rateLimit(`talents.list:${ctx.user.id}`, 60, 60_000)) {
+        throw new TRPCError({ code: "TOO_MANY_REQUESTS", message: "Too many requests — slow down" });
+      }
       const db = getDb();
       const all = await db.query.talents.findMany();
       const published = await db.query.assessments.findMany({
@@ -113,7 +119,12 @@ export const talentsRouter = createRouter({
         story: z.string().min(1),
         lookingFor: z.string().min(1),
         availability: z.string().min(1),
-        role: z.string().min(1),
+        role: z.enum(TALENT_ROLES),
+        // Identity fields stay editable — it's the talent's own profile.
+        name: z.string().trim().min(2).max(120).optional(),
+        origin: z.string().trim().max(120).optional(),
+        yearsInNL: z.number().int().min(0).max(80).optional(),
+        languages: z.array(z.string().trim().min(1).max(60)).max(10).optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -122,6 +133,10 @@ export const talentsRouter = createRouter({
         .update(talents)
         .set(input)
         .where(eq(talents.id, ctx.user.talentId));
+      // Keep the account name in sync with the public profile name.
+      if (input.name) {
+        await getDb().update(users).set({ name: input.name }).where(eq(users.id, ctx.user.id));
+      }
       return getDb().query.talents.findFirst({
         where: eq(talents.id, ctx.user.talentId),
       });

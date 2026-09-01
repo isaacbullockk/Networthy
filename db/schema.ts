@@ -37,6 +37,8 @@ export const users = mysqlTable(
     charterSignedAt: timestamp("charter_signed_at"),
     /** Recruiters can browse the pool only after an admin approves them */
     approvedAt: timestamp("approved_at"),
+    /** Set when the user clicks the verification link — signup emails must be real */
+    emailVerifiedAt: timestamp("email_verified_at"),
     /** Preferred UI language (en / nl / ar) — pulses & emails follow this */
     locale: varchar("locale", { length: 8 }).notNull().default("en"),
     /** Skills-first browsing: identity (name, origin, video) hidden until a match exists */
@@ -73,6 +75,21 @@ export const passwordResets = mysqlTable(
     createdAt: timestamp("created_at").defaultNow().notNull(),
   },
   (t) => ({ hashIdx: index("reset_hash_idx").on(t.tokenHash) })
+);
+
+/* ---------- Email verification (signup addresses must be real) ---------- */
+
+export const emailVerifications = mysqlTable(
+  "email_verifications",
+  {
+    id: serial("id").primaryKey(),
+    userId: bigint("user_id", { mode: "number", unsigned: true }).notNull(),
+    tokenHash: varchar("token_hash", { length: 64 }).notNull(),
+    expiresAt: timestamp("expires_at").notNull(),
+    usedAt: timestamp("used_at"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (t) => ({ hashIdx: index("verify_hash_idx").on(t.tokenHash) })
 );
 
 /* ---------- Talent profiles ---------- */

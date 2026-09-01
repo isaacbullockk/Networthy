@@ -1,5 +1,6 @@
 import { TRPCError } from "@trpc/server";
 import { publicQuery } from "./middleware";
+import { EMAIL_VERIFICATION_REQUIRED } from "@contracts/errors";
 import type { User } from "@db/schema";
 
 /** Requires a logged-in user; narrows ctx.user to non-null. */
@@ -20,6 +21,9 @@ export const recruiterQuery = authedQuery.use(({ ctx, next }) => {
   if (ctx.user.role !== "recruiter") throw new TRPCError({ code: "FORBIDDEN" });
   if (!ctx.user.approvedAt)
     throw new TRPCError({ code: "FORBIDDEN", message: "Account pending approval" });
+  // No unverified inbox touches the talent pool.
+  if (!ctx.user.emailVerifiedAt)
+    throw new TRPCError({ code: "FORBIDDEN", message: EMAIL_VERIFICATION_REQUIRED });
   return next({ ctx });
 });
 

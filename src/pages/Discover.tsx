@@ -6,6 +6,7 @@ import { useAuth } from '@/lib/auth'
 import { Switch } from '@/components/ui/switch'
 import TalentCard from '@/components/TalentCard'
 import { discover } from '@/config/poolContent'
+import { EMAIL_VERIFICATION_REQUIRED } from '@contracts/errors'
 
 const SKILL_FILTERS = ['Engineering', 'Hospitality', 'Finance', 'Logistics', 'Design', 'People', 'Technical']
 const TRAIT_FILTERS = ['Resilient', 'Team leader', 'Empathic', 'Planner', 'Reliable', 'Mentor', 'Hands-on']
@@ -22,9 +23,11 @@ export default function Discover() {
     () => hiringFor.split(',').map((s) => s.trim()).filter(Boolean),
     [hiringFor]
   )
-  const { data: talents, isLoading } = trpc.talents.list.useQuery(
+  const { data: talents, isLoading, error } = trpc.talents.list.useQuery(
     wantedSkills.length > 0 ? { skills: wantedSkills } : undefined
   )
+  const resendVerify = trpc.auth.resendVerification.useMutation()
+  const needsVerification = error?.message === EMAIL_VERIFICATION_REQUIRED
   const setAnon = trpc.auth.setAnonymousBrowsing.useMutation({
     onSuccess: async () => {
       await Promise.all([utils.talents.list.invalidate(), utils.auth.me.invalidate()])
@@ -103,6 +106,21 @@ export default function Discover() {
           </div>
         </div>
       </div>
+
+      {/* Email verification gate */}
+      {needsVerification && (
+        <div className="mt-8 flex flex-col items-center gap-3 rounded-3xl border border-amber-300 bg-amber-50 p-6 text-center">
+          <p className="font-semibold text-amber-900">{t('auth.verifyGateTitle')}</p>
+          <p className="max-w-md text-sm text-amber-800">{t('auth.verifyGateBody')}</p>
+          <button
+            onClick={() => resendVerify.mutate()}
+            disabled={resendVerify.isPending || resendVerify.isSuccess}
+            className="rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground transition hover:opacity-90 disabled:opacity-50"
+          >
+            {resendVerify.isSuccess ? t('auth.verifyResent') : t('auth.verifyResend')}
+          </button>
+        </div>
+      )}
 
       {/* Filters */}
       <div className="mt-8 rounded-3xl border border-border bg-card p-4 shadow-sm sm:p-5">

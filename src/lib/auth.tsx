@@ -1,4 +1,5 @@
 import { createContext, useContext, type ReactNode } from 'react'
+import { useTranslation } from 'react-i18next'
 import { trpc } from '@/providers/trpc'
 import type { SessionUser } from '@/types'
 
@@ -23,6 +24,7 @@ const Ctx = createContext<AuthState | null>(null)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const utils = trpc.useUtils()
+  const { i18n } = useTranslation()
   const me = trpc.auth.me.useQuery(undefined, { retry: false, staleTime: 60_000 })
   const loginMut = trpc.auth.login.useMutation({
     onSuccess: () => utils.invalidate(),
@@ -43,7 +45,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   const register = async (input: RegisterInput) => {
-    return (await registerMut.mutateAsync({ ...input, email: input.email.toLowerCase() })) as SessionUser
+    const locale = (i18n.language || 'en').slice(0, 2)
+    return (await registerMut.mutateAsync({
+      ...input,
+      email: input.email.toLowerCase(),
+      locale: locale === 'nl' || locale === 'ar' ? locale : 'en',
+    })) as SessionUser
   }
 
   const guestMut = trpc.auth.guestLogin.useMutation({

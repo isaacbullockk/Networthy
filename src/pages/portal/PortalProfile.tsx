@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { trpc } from '@/providers/trpc'
 import Avatar from '@/components/Avatar'
 import VideoIntroRecorder from '@/components/VideoIntroRecorder'
+import { TALENT_ROLES, type TalentRole } from '@contracts/roles'
 
 export default function PortalProfile() {
   const { t } = useTranslation()
@@ -20,12 +21,16 @@ export default function PortalProfile() {
 
   const [editing, setEditing] = useState(false)
   const [saved, setSaved] = useState(false)
-  const [form, setForm] = useState({ role: '', tagline: '', story: '', lookingFor: '', availability: '' })
+  const [form, setForm] = useState<{ role: TalentRole | ''; name: string; origin: string; yearsInNL: string; languages: string; tagline: string; story: string; lookingFor: string; availability: string }>({ role: '', name: '', origin: '', yearsInNL: '', languages: '', tagline: '', story: '', lookingFor: '', availability: '' })
 
   useEffect(() => {
     if (profile) {
       setForm({
-        role: profile.role,
+        role: profile.role as TalentRole,
+        name: profile.name,
+        origin: profile.origin,
+        yearsInNL: String(profile.yearsInNL),
+        languages: profile.languages.join(', '),
         tagline: profile.tagline,
         story: profile.story,
         lookingFor: profile.lookingFor,
@@ -38,7 +43,7 @@ export default function PortalProfile() {
     return <div className="mx-auto max-w-3xl px-4 py-24 text-center text-muted-foreground">{t('portal.profile.loading')}</div>
   }
 
-  const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+  const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
     setForm((f) => ({ ...f, [k]: e.target.value }))
 
   return (
@@ -80,14 +85,29 @@ export default function PortalProfile() {
           <div className="pb-1">
             <h2 className="font-display text-2xl font-semibold">{profile.name}</h2>
             {editing ? (
-              <input value={form.role} onChange={set('role')} className="mt-1 rounded-lg border border-input bg-background px-3 py-1.5 text-sm outline-none focus:border-primary" />
+              <select value={form.role} onChange={set('role')} className="mt-1 rounded-lg border border-input bg-background px-3 py-1.5 text-sm outline-none focus:border-primary">
+                {TALENT_ROLES.map((r) => (
+                  <option key={r} value={r}>{r}</option>
+                ))}
+              </select>
             ) : (
               <div className="font-medium text-primary">{profile.role}</div>
             )}
           </div>
           <div className="ms-auto flex flex-wrap gap-x-5 gap-y-1 pb-1 text-sm text-muted-foreground">
-            <span className="inline-flex items-center gap-1.5"><MapPin className="h-4 w-4" /> {profile.origin} · {profile.yearsInNL} yrs in NL</span>
-            <span className="inline-flex items-center gap-1.5"><Languages className="h-4 w-4" /> {profile.languages.join(' · ')}</span>
+            {editing ? (
+              <div className="flex flex-wrap items-center gap-3">
+                <input value={form.name} onChange={set('name')} placeholder={t('portal.profile.name')} className="w-40 rounded-lg border border-input bg-background px-3 py-1.5 text-sm outline-none focus:border-primary" />
+                <input value={form.origin} onChange={set('origin')} placeholder={t('portal.profile.origin')} className="w-32 rounded-lg border border-input bg-background px-3 py-1.5 text-sm outline-none focus:border-primary" />
+                <input value={form.yearsInNL} onChange={set('yearsInNL')} type="number" min="0" max="80" placeholder={t('portal.profile.yearsInNL')} className="w-24 rounded-lg border border-input bg-background px-3 py-1.5 text-sm outline-none focus:border-primary" />
+                <input value={form.languages} onChange={set('languages')} placeholder={t('portal.profile.languages')} className="w-52 rounded-lg border border-input bg-background px-3 py-1.5 text-sm outline-none focus:border-primary" />
+              </div>
+            ) : (
+              <>
+                <span className="inline-flex items-center gap-1.5"><MapPin className="h-4 w-4" /> {profile.origin} · {profile.yearsInNL} yrs in NL</span>
+                <span className="inline-flex items-center gap-1.5"><Languages className="h-4 w-4" /> {profile.languages.join(' · ')}</span>
+              </>
+            )}
           </div>
         </div>
       </div>
@@ -166,7 +186,20 @@ export default function PortalProfile() {
       {editing && (
         <div className="sticky bottom-6 mt-6 flex items-center gap-3 rounded-3xl border border-border bg-card/95 p-4 shadow-xl backdrop-blur">
           <button
-            onClick={() => updateMut.mutate(form)}
+            onClick={() =>
+              form.role &&
+              updateMut.mutate({
+                tagline: form.tagline,
+                story: form.story,
+                lookingFor: form.lookingFor,
+                availability: form.availability,
+                role: form.role,
+                name: form.name.trim() || undefined,
+                origin: form.origin.trim(),
+                yearsInNL: Math.max(0, Math.min(80, parseInt(form.yearsInNL, 10) || 0)),
+                languages: form.languages.split(',').map((s) => s.trim()).filter(Boolean).slice(0, 10),
+              })
+            }
             disabled={updateMut.isPending}
             className="inline-flex items-center gap-2 rounded-full bg-primary px-6 py-3 font-semibold text-primary-foreground transition hover:brightness-110 disabled:opacity-50"
           >

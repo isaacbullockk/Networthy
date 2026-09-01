@@ -13,3 +13,10 @@ export const Errors = {
 } as const;
 
 export type { AppError };
+
+/**
+ * Error message the recruiterQuery guard throws when the recruiter hasn't
+ * verified their email. Shared contract: the frontend keys the verification
+ * gate banner on this exact constant — never on a re-typed string.
+ */
+export const EMAIL_VERIFICATION_REQUIRED = "Confirm your email address first";

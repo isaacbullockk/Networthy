@@ -78,6 +78,20 @@
       "when": 1788193365843,
       "tag": "0010_talent_consent",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "5",
+      "when": 1788194472073,
+      "tag": "0011_email_verification",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "5",
+      "when": 1788195600000,
+      "tag": "0012_role_allowlist",
+      "breakpoints": true
     }
   ]
 }

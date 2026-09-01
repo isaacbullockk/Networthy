@@ -4,16 +4,17 @@ import { TRPCError } from "@trpc/server";
 import { createRouter, publicQuery } from "../middleware";
 import { authedQuery, recruiterQuery } from "../auth";
 import { getDb } from "../queries/connection";
-import { passwordResets, sessions, talents, users } from "@db/schema";
+import { emailVerifications, passwordResets, sessions, talents, users } from "@db/schema";
 import { and, eq, isNull } from "drizzle-orm";
 import { COOKIE_NAME } from "../context";
 import { hashPassword, verifyPassword } from "../lib/password";
 import { rateLimit, clientIp } from "../lib/rateLimit";
-import { sendAdminRecruiterApplied, sendPasswordReset } from "../lib/email";
+import { sendAdminRecruiterApplied, sendPasswordReset, sendVerificationEmail } from "../lib/email";
 
 const sha256 = (s: string) => createHash("sha256").update(s).digest("hex");
 
 const THIRTY_DAYS = 30 * 24 * 60 * 60 * 1000;
+const VERIFY_TTL_MS = 24 * 60 * 60 * 1000;
 const isProd = process.env.NODE_ENV === "production";
 
 function publicUser(u: typeof users.$inferSelect) {
@@ -36,6 +37,23 @@ async function createSession(userId: number, isGuest = false) {
     expiresAt: new Date(Date.now() + THIRTY_DAYS),
   });
   return token;
+}
+
+/**
+ * Email verification: single-use sha256-hashed token, 24h TTL, previous
+ * tokens for the user are wiped first. The raw token only exists in the
+ * email — never in the database or logs.
+ */
+async function issueVerification(userId: number, email: string, name: string, locale: string | null) {
+  const db = getDb();
+  await db.delete(emailVerifications).where(eq(emailVerifications.userId, userId));
+  const token = randomBytes(32).toString("hex");
+  await db.insert(emailVerifications).values({
+    userId,
+    tokenHash: sha256(token),
+    expiresAt: new Date(Date.now() + VERIFY_TTL_MS),
+  });
+  sendVerificationEmail(email, name, token, locale);
 }
 
 export const authRouter = createRouter({
@@ -72,6 +90,7 @@ export const authRouter = createRouter({
           .refine((p) => /[a-zA-Z]/.test(p) && /[0-9]/.test(p), "Include letters and numbers"),
         role: z.enum(["talent", "recruiter"]),
         company: z.string().trim().max(255).optional(),
+        locale: z.enum(["en", "nl", "ar"]).optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -118,6 +137,7 @@ export const authRouter = createRouter({
         role: input.role,
         company: input.role === "recruiter" ? input.company || null : null,
         talentId: talentId ?? null,
+        locale: input.locale ?? "en",
         // Recruiters stay pending until an admin approves them;
         // talents get immediate access to their own portal.
         approvedAt: input.role === "talent" ? new Date() : null,
@@ -130,6 +150,8 @@ export const authRouter = createRouter({
       if (input.role === "recruiter") {
         sendAdminRecruiterApplied(input.name, input.company ?? null, email);
       }
+      // Every new account must prove the inbox is theirs.
+      await issueVerification(userId, email, input.name, input.locale ?? "en");
       return publicUser(user!);
     }),
 
@@ -197,6 +219,47 @@ export const authRouter = createRouter({
       await db.delete(sessions).where(eq(sessions.userId, row.userId));
       return { ok: true };
     }),
+
+  /**
+   * Email verification, step 2: single-use token from the signup email.
+   * Marks the token used and stamps users.emailVerifiedAt.
+   */
+  verifyEmail: publicQuery
+    .input(z.object({ token: z.string().min(32).max(128) }))
+    .mutation(async ({ input }) => {
+      const db = getDb();
+      const row = await db.query.emailVerifications.findFirst({
+        where: and(
+          eq(emailVerifications.tokenHash, sha256(input.token)),
+          isNull(emailVerifications.usedAt)
+        ),
+      });
+      if (!row || row.expiresAt.getTime() < Date.now()) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Verification link is invalid or expired" });
+      }
+      await db
+        .update(emailVerifications)
+        .set({ usedAt: new Date() })
+        .where(eq(emailVerifications.id, row.id));
+      await db
+        .update(users)
+        .set({ emailVerifiedAt: new Date() })
+        .where(eq(users.id, row.userId));
+      return { ok: true };
+    }),
+
+  /** Resend the verification email — own account only, rate-limited. */
+  resendVerification: authedQuery.mutation(async ({ ctx }) => {
+    if (!rateLimit(`resend-verify:${ctx.user.id}`, 3, 60 * 60_000)) {
+      throw new TRPCError({
+        code: "TOO_MANY_REQUESTS",
+        message: "Too many attempts — try again later",
+      });
+    }
+    if (ctx.user.emailVerifiedAt) return { ok: true, alreadyVerified: true };
+    await issueVerification(ctx.user.id, ctx.user.email, ctx.user.name, ctx.user.locale);
+    return { ok: true, alreadyVerified: false };
+  }),
 
   /**
    * Guest preview: a read-only session borrowing the showcase recruiter's

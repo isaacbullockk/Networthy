@@ -23,7 +23,7 @@ function ScoreRing({ score }: { score: number }) {
   )
 }
 
-export default function TalentCard({ talent }: { talent: Omit<Talent, 'matchScore'> & { matchScore: number | null; verifiedCount?: number; anonymized?: boolean } }) {
+export default function TalentCard({ talent }: { talent: Omit<Talent, 'matchScore' | 'matchReasons'> & { matchScore: number | null; matchReasons: string[]; verifiedCount?: number; anonymized?: boolean } }) {
   const { t } = useTranslation()
   const anon = talent.anonymized === true
   const displayName = anon ? `${t('anon.codename')} #${1000 + talent.id}` : talent.name
@@ -64,9 +64,13 @@ export default function TalentCard({ talent }: { talent: Omit<Talent, 'matchScor
         ) : null}
       </div>
 
-      <p className="mt-4 line-clamp-2 font-display text-[15px] italic leading-snug text-foreground/80">
-        “{talent.tagline}”
-      </p>
+      {anon ? (
+        <p className="mt-4 line-clamp-2 text-[13px] italic text-muted-foreground">{t('anon.lockedStory')}</p>
+      ) : (
+        <p className="mt-4 line-clamp-2 font-display text-[15px] italic leading-snug text-foreground/80">
+          “{talent.tagline}”
+        </p>
+      )}
 
       <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
         {anon ? (

@@ -3,8 +3,10 @@ import { TRPCError } from "@trpc/server";
 import { createRouter } from "../middleware";
 import { authedQuery, recruiterQuery, talentQuery } from "../auth";
 import { getDb } from "../queries/connection";
-import { matches, talents } from "@db/schema";
+import { matches, talents, users } from "@db/schema";
 import { and, eq } from "drizzle-orm";
+import { rateLimit } from "../lib/rateLimit";
+import { sendConnectionRequest } from "../lib/email";
 
 const STAGES = ["connected", "video_chat", "questionnaire", "in_house", "hired", "retained"] as const;
 
@@ -26,6 +28,13 @@ export const matchesRouter = createRouter({
   create: recruiterQuery
     .input(z.object({ talentId: z.number(), role: z.string().min(1) }))
     .mutation(async ({ ctx, input }) => {
+      // Connection requests reach real people — no spray-and-pray.
+      if (!rateLimit(`matches.create:${ctx.user.id}`, 20, 60 * 60_000)) {
+        throw new TRPCError({
+          code: "TOO_MANY_REQUESTS",
+          message: "Too many connection requests — try again later",
+        });
+      }
       const db = getDb();
       const existing = await db.query.matches.findFirst({
         where: and(eq(matches.talentId, input.talentId), eq(matches.recruiterId, ctx.user.id)),
@@ -52,6 +61,18 @@ export const matchesRouter = createRouter({
           lastActivity: today(),
         })
         .$returningId();
+      // Tell the talent — they hold the accept/decline decision.
+      const talentUser = await db.query.users.findFirst({
+        where: eq(users.talentId, input.talentId),
+      });
+      if (talentUser) {
+        sendConnectionRequest(
+          talentUser.email,
+          talentUser.name,
+          ctx.user.company ?? "An employer",
+          talentUser.locale
+        );
+      }
       return db.query.matches.findFirst({ where: eq(matches.id, id) });
     }),
 
@@ -92,8 +113,9 @@ export const matchesRouter = createRouter({
       const match = await db.query.matches.findFirst({ where: eq(matches.id, input.id) });
       if (!match) throw new TRPCError({ code: "NOT_FOUND" });
       if (match.recruiterId !== ctx.user.id) throw new TRPCError({ code: "FORBIDDEN" });
-      // The journey only moves once the talent has said yes.
-      if (match.talentConsent !== "accepted") {
+      // Stage transitions wait for the talent's yes; notes/rating are the
+      // recruiter's private workspace and stay editable anytime.
+      if (input.stage && match.talentConsent !== "accepted") {
         throw new TRPCError({ code: "BAD_REQUEST", message: "Waiting for the talent to accept the connection." });
       }
       const { id, ...patch } = input;

@@ -81,9 +81,11 @@ export default function TalentProfile() {
                 </div>
               </div>
 
-              <p className="mt-5 max-w-2xl font-display text-xl italic leading-snug text-foreground/85">
-                “{talent.tagline}”
-              </p>
+              {!anon && (
+                <p className="mt-5 max-w-2xl font-display text-xl italic leading-snug text-foreground/85">
+                  “{talent.tagline}”
+                </p>
+              )}
 
               <div className="mt-5 flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted-foreground">
                 {anon ? (
@@ -104,6 +106,12 @@ export default function TalentProfile() {
           </div>
 
           {/* Story */}
+          {anon ? (
+            <div className="rounded-3xl border border-dashed border-border bg-muted/30 p-6 text-center sm:p-8">
+              <EyeOff className="mx-auto h-5 w-5 text-muted-foreground" />
+              <p className="mt-3 text-sm text-muted-foreground">{t('anon.lockedStory')}</p>
+            </div>
+          ) : (
           <div className="rounded-3xl border border-border bg-card p-6 shadow-sm sm:p-8">
             <div className="flex items-center gap-3">
               <Quote className="h-5 w-5 text-primary" />
@@ -115,6 +123,7 @@ export default function TalentProfile() {
               <p className="mt-1.5 font-medium">{talent.lookingFor}</p>
             </div>
           </div>
+          )}
 
           {/* Talent dimensions */}
           <div className="rounded-3xl border border-border bg-card p-6 shadow-sm sm:p-8">
